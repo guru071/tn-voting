@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Connect JavaScript -->
+<script type="module" src="politics.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Tn Voting System</title>
+
+
+
+    <style>
+        /* MAIN CONTAINER */
+        .container {
+            width: 95%;
+            max-width: 1000px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .2);
+            animation: fadeIn .6s ease;
+        }
+
+        p {
+            text-align: center;
+            color: #0d47a1;
+            font-size: 36px;
+            font-weight: bold;
+            text-shadow: 0 0 10px aqua,
+                0 0 10px aqua,
+                0 0 10px aqua,
+                0 0 10px aqua;
+        }
+
+        /* TABLE */
+
+        .table-box {
+            overflow-x: auto;
+            margin-top: 25px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        /* ROW EFFECT */
+
+        tr.candidate-row {
+            cursor: pointer;
+            transition: .3s;
+        }
+
+        tr.candidate-row:hover {
+            background: #e3f2fd;
+        }
+
+        tr.candidate-row.selected {
+            background: #bbdefb;
+            transform: scale(1.01);
+        }
+
+        /* IMAGES */
+
+        table img {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+            transition: .3s;
+        }
+
+        tr:hover img {
+            transform: scale(1.1);
+        }
+
+        /* BUTTONS */
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: .3s;
+        }
+
+        #voteBtn {
+            background: #ffa000;
+            color: white;
+              box-shadow: 0 0 10px #e2c695,
+        0 0 10px #e2c695,
+        0 0 10px #e2c695,
+        0 0 10px #e2c695;
+        }
+
+        #submitBtn {
+            background: #1976d2;
+            color: white;
+              box-shadow: 0 0 10px #7ca3de,
+        0 0 10px #7ca3de,
+        0 0 10px #7ca3de,
+        0 0 10px #7ca3de;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            opacity: .9;
+        }
+
+        button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        /* MESSAGE */
+
+        #message {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .info {
+            color: orange;
+        }
+
+        /* ANIMATION */
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="politics.css">
+</head>
+
+
+<body>
+
+    <div class="container">
+
+        <p>TN Voting System</p>
+
+        <div class="table-box">
+
+            <table>
+
+                <thead>
+                    <tr class="header">
+                        <th>Select</th>
+                        <th>Party</th>
+                        <th>Flag</th>
+                        <th>Symbol</th>
+                        <th>Leader</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <tr class="candidate-row" data-party="DMK" data-leader="M K Stalin">
+                        <td><input type="radio" name="vote"></td>
+                        <td>DMK</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Flag_DMK.svg/60px-Flag_DMK.svg.png">
+                        </td>
+                        <td><img src="https://www.dmk.in/_next/static/media/dmklogo.121ba4e5.webp"></td>
+                        <td>M K Stalin</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="TVK" data-leader="Vijay">
+                        <td><input type="radio" name="vote"></td>
+                        <td>TVK</td>
+                        <td><img src="https://i.pinimg.com/736x/cb/94/47/cb9447a9a518aa16563a2748f428e589.jpg"></td>
+                        <td><img src="https://pbs.twimg.com/media/HBRdbNjbIAAXh44.jpg"></td>
+                        <td>Vijay</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="AIADMK" data-leader="Edappadi">
+                        <td><input type="radio" name="vote"></td>
+                        <td>AIADMK</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/AIADMK_Flag.svg/60px-AIADMK_Flag.svg.png">
+                        </td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Indian_election_symbol_two_leaves.svg/60px-Indian_election_symbol_two_leaves.svg.png">
+                        </td>
+                        <td>Edappadi K. Palaniswami</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="NTK" data-leader="Seeman">
+                        <td><input type="radio" name="vote"></td>
+                        <td>NTK</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Naam_Tamilar_Katchi.jpg/60px-Naam_Tamilar_Katchi.jpg">
+                        </td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/NTK-EC-Symbol.jpg/60px-NTK-EC-Symbol.jpg">
+                        </td>
+                        <td>Seeman</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="BJP" data-leader="Nainar Nagenthran">
+                        <td><input type="radio" name="vote"></td>
+                        <td>BJP</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/BJP_flag.svg/60px-BJP_flag.svg.png">
+                        </td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Lotus_flower_symbol.svg/60px-Lotus_flower_symbol.svg.png">
+                        </td>
+                        <td>Nainar Nagenthran</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="CONGRESS" data-leader="K.Selvaperunthagai">
+                        <td><input type="radio" name="vote"></td>
+                        <td>CONGRESS</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Indian_National_Congress_Flag.svg/60px-Indian_National_Congress_Flag.svg.png">
+                        </td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Hand_INC.svg/60px-Hand_INC.svg.png">
+                        </td>
+                        <td>K.Selvaperunthagai</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="COMMUNIST" data-leader="M.Veerapandian">
+                        <td><input type="radio" name="vote"></td>
+                        <td>COMMUNIST</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/CPI-banner.svg/60px-CPI-banner.svg.png">
+                        </td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Indian_Election_Symbol_Ears_of_Corn_and_Sickle.png/60px-Indian_Election_Symbol_Ears_of_Corn_and_Sickle.png">
+                        </td>
+                        <td>M.Veerapandian</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="VCK" data-leader="Thirumavalavan">
+                        <td><input type="radio" name="vote"></td>
+                        <td>VCK</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Viduthalai_Chiruthaigal_Katchi_banner.png/60px-Viduthalai_Chiruthaigal_Katchi_banner.png">
+                        </td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Pot_Symbol.png/60px-Pot_Symbol.png">
+                        </td>
+                        <td>Thirumavalavan</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="AMMK" data-leader="TTV Dhinakaran">
+                        <td><input type="radio" name="vote"></td>
+                        <td>AMMK</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Flag_AMMK.jpg/60px-Flag_AMMK.jpg">
+                        </td>
+                        <td><img
+                                src="https://d335ht648dtga1.cloudfront.net/wp-content/uploads/2020/07/05203320/symbol-1.png">
+                        </td>
+                        <td>TTV Dhinakaran</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="PMK" data-leader="Anbumani Ramadoss">
+                        <td><input type="radio" name="vote"></td>
+                        <td>PMK</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Pmk_flag.jpg/60px-Pmk_flag.jpg">
+                        </td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Pattali_Makkal_Katchi_Ripe_Mango_Symbol.png/120px-Pattali_Makkal_Katchi_Ripe_Mango_Symbol.png">
+                        </td>
+                        <td>Anbumani Ramadoss</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="DMDK" data-leader="Premallatha Vijayakant">
+                        <td><input type="radio" name="vote"></td>
+                        <td>DMDK</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Flag_DMDK.png/60px-Flag_DMDK.png">
+                        </td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Indian_Election_Symbol_Nagara.svg/60px-Indian_Election_Symbol_Nagara.svg.png">
+                        </td>
+                        <td>Premallatha Vijayakant</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="MNM" data-leader="Kamal Haasan">
+                        <td><input type="radio" name="vote"></td>
+                        <td>MNM</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Makkal_Needhi_Maiam_Party_Logo.png/60px-Makkal_Needhi_Maiam_Party_Logo.png">
+                        </td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Indian_Election_Symbol_Battery-Torch.png/120px-Indian_Election_Symbol_Battery-Torch.png">
+                        </td>
+                        <td>Kamal Haasan</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="MDMK" data-leader="Vaiko">
+                        <td><input type="radio" name="vote"></td>
+                        <td>MDMK</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/MDMK.svg/60px-MDMK.svg.png">
+                        </td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Indian_Election_Symbol_Matchbox.png/120px-Indian_Election_Symbol_Matchbox.png">
+                        </td>
+                        <td>Vaiko</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="AISMK" data-leader="Sarathkumar">
+                        <td><input type="radio" name="vote"></td>
+                        <td>AISMK</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/AISMK_FLAG.png/250px-AISMK_FLAG.png">
+                        </td>
+                        <td><img src="https://upload.wikimedia.org/wikipedia/commons/1/16/SMK_Flag.jpg"></td>
+                        <td>Sarathkumar</td>
+                    </tr>
+
+                    <tr class="candidate-row" data-party="TMC" data-leader="G.K.Vasan">
+                        <td><input type="radio" name="vote"></td>
+                        <td>TMC</td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/en/6/67/Tamil_Maanila_Congress_%28M%29_Flag.jpg">
+                        </td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/b/b2/Indian_Election_Symbol_Cycle.png">
+                        </td>
+                        <td>G.K.Vasan</td>
+                    </tr>
+                    <tr class="candidate-row" data-party="NOTA" data-leader="NIL">
+                        <td><input type="radio" name="vote"></td>
+
+                        <td>NOTA</td>
+                        <td></td>
+                        <td><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/NOTA_Option_Logo.png/1280px-NOTA_Option_Logo.png?_=20150928105505">
+                        </td>
+
+                        <td>NIL</td>
+
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <div class="buttons">
+
+            <button id="voteBtn">Vote</button>
+            <button id="submitBtn" disabled>Submit Vote</button>
+
+        </div>
+
+
+        <div id="message"></div>
+
+    </div>
+
+
+
+
+</body>
+
+</html>

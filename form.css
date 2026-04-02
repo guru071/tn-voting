@@ -1,0 +1,52 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+
+}
+
+.form-box {
+    position: absolute;
+    overflow: hidden;
+    top: 50%;
+    left: 50%;
+    width: 300px;
+    transform: translate(-50%, -50%);
+    overflow: hidden;
+    align-items: center;
+ 
+
+    align-content: center;
+    background-color: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(5px);
+    box-shadow: 0 0 10px white,
+        0 0 10px white,
+        0 0 10px white,
+        0 0 10px white;
+
+}
+
+video {
+    width: 100%;
+    height: 100vh;
+    object-fit: cover;
+    z-index: -1;
+}
+
+.inp {
+
+
+   padding-left: 10px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+
+    background: rgba(255, 255, 255, 0.35);
+    border: none;
+    border-radius: 10px;
+    outline: none;
+ 
+    color: #000;
+}

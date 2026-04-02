@@ -1,0 +1,183 @@
+/* =========================
+   RESET
+========================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", sans-serif;
+}
+
+h2 {
+  font-weight: bold;
+  font-style: oblique;
+  font-family: "Kavivanar", cursive;
+}
+
+/* =========================
+   COMMON BODY STYLE
+========================= */
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* background-position only works if there is a background-image/gradient */
+  animation: flowAnimation 15s ease infinite;
+}
+
+/* =========================
+   VIDEO BACKGROUND (FIXED)
+========================= */
+video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -1; /* Keeps video behind the card */
+  margin: 0;   /* Removed the margin-bottom */
+}
+
+/* =========================
+   GLASS CARD
+========================= */
+.card {
+  position: relative; /* Changed from absolute for better flex centering */
+  z-index: 1;
+  width: 300px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 15px;
+  color: black;
+  box-shadow: 0 0 10px white,
+              0 0 10px white,
+              0 0 10px white,
+              0 0 10px white;
+}
+
+/* =========================
+   TABLE & INPUTS
+========================= */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td {
+  padding: 6px 4px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.vtid, .aadhar {
+  width: 100%;
+  height: 36px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  border-radius: 10px;
+  outline: none;
+  font-size: 16px;
+  color: #000;
+}
+
+/* =========================
+   OTP SECTION
+========================= */
+.inputs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.otp {
+  width: 34px;
+  height: 40px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.35);
+  border: none;
+  border-radius: 10px;
+  outline: none;
+  color: #000;
+}
+
+/* =========================
+   BUTTON
+========================= */
+button {
+  width: 100%;
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  color: black;
+  cursor: pointer;
+  box-shadow: 0 0 10px white,
+              0 0 10px white,
+              0 0 10px white,
+              0 0 10px white;
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+/* =========================
+   BACKGROUND ANIMATION
+========================= */
+@keyframes flowAnimation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* --------- mobile view ------------- */
+@media (max-width: 768px) {
+  body.aadhar-page .card,
+  body.voting-page .card {
+    width: 100% !important;
+    max-width: 380px;
+    margin: auto;
+    padding: 18px;
+  }
+
+  body.aadhar-page .card {
+    max-width: 300px;
+  }
+
+  body.voting-page .card {
+    max-width: 420px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  .vtid, .aadhar {
+    height: 34px;
+    font-size: 14px;
+  }
+
+  .otp {
+    width: 32px;
+    height: 38px;
+    font-size: 16px;
+  }
+}

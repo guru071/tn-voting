@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voting Registration</title>
+<link rel="icon" href="data:,">
+
+<style>
+body{
+    margin:0;
+    font-family: Arial, sans-serif;
+    background:#f2f5f9;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+
+.form-box{
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    width:100%;
+    max-width:400px;
+}
+
+h2{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.input-group{
+    margin-bottom:15px;
+}
+
+.input-group label{
+    font-weight:bold;
+    font-size:14px;
+    display:block;
+    margin-bottom:5px;
+}
+
+.input-group input{
+    width:100%;
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:5px;
+    font-size:14px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    background:#007bff;
+    color:white;
+    border:none;
+    border-radius:5px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#0056b3;
+}
+
+.message{
+    text-align:center;
+    margin-top:10px;
+    font-weight:bold;
+}
+.success{
+    color:green;
+}
+.error{
+    color:red;
+}
+</style>
+<link rel="stylesheet" href="form.css">
+</head>
+
+<body>
+
+<div class="form-box">
+    <h2>Voting Registration</h2>
+<div class="input-group">
+        <label>Name</label>
+        <input class="inp" id="name" type="text" placeholder="Enter your name">
+    </div>
+    <div class="input-group">
+        <label>Aadhar Number</label>
+        <input class="inp"id="aadhar" type="text" placeholder="Enter 12 digit Aadhar">
+    </div>
+
+    <div class="input-group">
+        <label>Date of Birth</label>
+        <input class="inp" id="birth" type="date">
+    </div>
+
+    <div class="input-group">
+        <label>Phone Number</label>
+        <input class="inp" id="phonenumber" type="text" placeholder="Enter 10 digit phone">
+    </div>
+
+    <div class="input-group">
+        <label>Gmail</label>
+        <input class="inp" id="gmail" type="text" placeholder="Enter gmail">
+    </div>
+    <div class="input-group">
+        <label>Vote ID</label>
+        <input class="inp" id="voteid" type="text" placeholder="Enter Vote ID">
+    </div>
+
+    <button class="inp" type="button" id="submitBtn">Submit</button>
+
+    <div id="message" class="message"></div>
+</div>
+
+<script type="module" src="form.js">
+
+</script>
+<video autoplay muted loop>
+    <source src="video2.mp4" type="video/mp4">
+</video>
+</body>
+</html>
