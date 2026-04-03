@@ -1,7 +1,7 @@
 import { db } from "./firebase.js";
 import {
   doc, getDoc,
-  setDoc
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 document.querySelector(".nextbtn")
   .addEventListener("click", click_next);
@@ -43,7 +43,7 @@ async function click_next() {
 
           document.getElementById("voteid").value = "";
           document.getElementById("birth").value = "";
-          await setDoc(docRef, {
+          await updateDoc(docRef, {
             access:true
         });
           window.location.href = "aadhar.html";

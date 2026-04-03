@@ -1,5 +1,5 @@
 import { db } from "./firebase.js";
-import { doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
     // 1. Do synchronous checks immediately
@@ -117,7 +117,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 sessionStorage.removeItem("aadhar_found");
 
                 disableAll();
-                await setDoc(docRef, {
+                await updateDoc(docRef, {
                     access: false
                 });
                 // Add a small delay so they can read the success message
