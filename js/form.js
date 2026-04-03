@@ -16,17 +16,38 @@ const message = document.getElementById("message");
 async function insertdata() {
 
     const name = document.getElementById("name").value.trim();
-    const aadhar = document.getElementById("aadhar").value.trim().replaceAll(" ","");
+    const aadhar = document.getElementById("aadhar").value.trim().replaceAll(" ", "");
     const birth = document.getElementById("birth").value;
     const ph_no = document.getElementById("phonenumber").value.trim();
     const vote_id = document.getElementById("voteid").value.trim();
     const gmail = document.getElementById("gmail").value.trim();
-    if (!name || !aadhar || !birth || !ph_no || !vote_id || !gmail) {
+    const gender = document.getElementById("gender").value.trim().toLowerCase();
+    const address = document.getElementById("address").value.trim();
+    function isValidVoterId(voteId) {
+        // This regex means: Start with exactly 3 letters, followed by 1 or more numbers until the end.
+        const regex = /^[a-zA-Z]{3}\d+$/;
+
+        return regex.test(voteId);
+    }
+    if (gender !== "male" && gender !== "female" && gender !== "other") {
+        message.innerHTML = "<span class='error'>Invalid gender!</span>";
+        return;
+    }
+    if (!name || !aadhar || !birth || !ph_no || !vote_id || !gmail || !gender || !address) {
         message.innerHTML = "<span class='error'>All fields are required!</span>";
         return;
     }
-    if (aadhar.length != 12   || isNaN(aadhar)) {
-        alert("Enter vaild aadhar");
+    if (aadhar.length != 12 || isNaN(aadhar)) {
+        message.innerHTML = "<span class='error'>Invalid Aadhar number!</span>";
+        return;
+    }
+    if (ph_no.length != 10 || isNaN(ph_no)) {
+        message.innerHTML = "<span class='error'>Invalid phone number!</span>";
+        return;
+    }
+    if (vote_id.length != 10 || !isValidVoterId(vote_id)) {
+        message.innerHTML = "<span class='error'>Invalid Voter ID!</span>";
+        return;
     }
     // AGE CHECK
     const today = new Date();
@@ -73,10 +94,12 @@ async function insertdata() {
             name: name,
             aadhar: Number(aadhar),
             birth: Timestamp.fromDate(new Date(birth)),
+            gender: gender,
             isvoted: false,
             ph_no: Number(ph_no),
             vote_id: vote_id,
-            gmail: gmail
+            gmail: gmail,
+            address: address
         });
 
         message.innerHTML = "<span class='success'>Registration Successful!</span>";
@@ -87,6 +110,8 @@ async function insertdata() {
         document.getElementById("phonenumber").value = "";
         document.getElementById("voteid").value = "";
         document.getElementById("gmail").value = "";
+        document.getElementById("gender").value = "";
+        document.getElementById("address").value = "";
     } catch (error) {
         message.innerHTML = "<span class='error'>" + error.message + "</span>";
     }

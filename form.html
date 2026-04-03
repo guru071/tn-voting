@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Voting Registration</title>
-<link rel="icon" href="data:,">
-
 <style>
 body{
     margin:0;
@@ -77,7 +75,7 @@ button:hover{
     color:red;
 }
 </style>
-<link rel="stylesheet" href="form.css">
+<link rel="stylesheet" href="./css/form.css">
 </head>
 
 <body>
@@ -99,6 +97,10 @@ button:hover{
     </div>
 
     <div class="input-group">
+        <label>Gender</label>
+        <input class="inp" id="gender" type="text" placeholder="Enter gender">
+    </div>
+    <div class="input-group">
         <label>Phone Number</label>
         <input class="inp" id="phonenumber" type="text" placeholder="Enter 10 digit phone">
     </div>
@@ -112,16 +114,20 @@ button:hover{
         <input class="inp" id="voteid" type="text" placeholder="Enter Vote ID">
     </div>
 
+    <div class="input-group">
+        <label>Address</label>
+        <input class="inp" id="address" type="text" placeholder="Enter address">
+    </div>
     <button class="inp" type="button" id="submitBtn">Submit</button>
 
     <div id="message" class="message"></div>
 </div>
 
-<script type="module" src="form.js">
+<script type="module" src="./js/form.js">
 
 </script>
 <video autoplay muted loop>
-    <source src="video2.mp4" type="video/mp4">
+    <source src="./assests/video/video2.mp4" type="video/mp4">
 </video>
 </body>
 </html>

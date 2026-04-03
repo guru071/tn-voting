@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Information Profile</title>
+    <script type="module" src="./js/info.js"></script>
+    <style>
+        /* Basic reset and background styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Profile card container styling */
+        .profile-card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        /* Profile photo styling */
+        .profile-card img {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #007bff;
+            margin-bottom: 20px;
+        }
+
+        /* Name styling */
+        .profile-card h2 {
+            margin: 0 0 20px;
+            color: #2c3e50;
+            font-size: 24px;
+        }
+
+        /* Individual information rows */
+        .info-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #ecf0f1;
+            text-align: left;
+        }
+
+        /* Remove border from the last item */
+        .info-group:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        /* Label styling (e.g., "Voter ID:") */
+        .info-group label {
+            font-weight: 600;
+            color: #7f8c8d;
+            font-size: 14px;
+            width: 40%;
+        }
+
+        /* Data styling (e.g., the actual ID number) */
+        .info-group span {
+            color: #34495e;
+            font-size: 15px;
+            width: 60%;
+            text-align: right;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="profile-card">
+        <img src="./data/image/dummy.png" alt="Profile Photo">
+
+        <h2 id="name"></h2>
+
+        <div class="info-group">
+            <label>Voter ID:</label>
+            <span id="voteid"></span>
+        </div>
+
+        <div class="info-group">
+            <label>Aadhar No:</label>
+            <span id="aadhar"></span>
+        </div>
+
+        <div class="info-group">
+            <label>Date of Birth:</label>
+            <span id="dob"></span>
+        </div>
+
+        <div class="info-group">
+            <label>Gender:</label>
+            <span id="gender"></span>
+        </div>
+
+        <div class="info-group">
+            <label>Contact:</label>
+            <span id="contact"></span>
+        </div>
+
+        <div class="info-group">
+            <label>Address:</label>
+            <span id="address"></span>
+        </div>
+        <div class="info-group" style="justify-content: center; margin-top: 20px;">
+            <center><button onclick="window.location.href='politics.html'"
+                    style="width: 100px; height: 40px; font-size: 18px; background-color: #007bff; color: white; border: none; cursor: pointer;border-radius: 20px;">Next</button>
+            </center>
+        </div>
+
+</body>
+
+</html>

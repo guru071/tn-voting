@@ -49,7 +49,7 @@ async function aadhar_page() {
         document
     .getElementById("aadharno")
     .value="";
-        window.location.href ="politics.html";
+        window.location.href ="info.html";
       }else{
         alert("Record not founded");
       }
