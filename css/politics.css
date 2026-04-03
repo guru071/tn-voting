@@ -20,7 +20,7 @@ thead{
         border-radius: 5px;
 }
 body {
-    background-image: url("tn5.jpg");
+    background-image: url("./images/tn5.jpg");
   min-height: 100vh;
   width: 100%;
 display: flex;
@@ -34,9 +34,9 @@ background-repeat: no-repeat;
 animation: bgchange 30s ease infinite;
 }
 @keyframes bgchange {
-    0%{background-image: url("tn5.jpg");}
-    25%{background-image: url("mailam.png");}
-    50%{background-image: url("tnlogo.jpeg");}
-    75%{background-image: url("tn5.jpg");}
-    100%{background-image: url("mailam.png");}
+    0%{background-image: url("./images/tn5.jpg");}
+    25%{background-image: url("./images/mailam.png");}
+    50%{background-image: url("./images/tnlogo.jpeg");}
+    75%{background-image: url("./images/tn5.jpg");}
+    100%{background-image: url("./images/mailam.png");}
 }
