@@ -1,5 +1,5 @@
 import { db } from "./firebase.js";
-import { doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
     // 1. Do synchronous checks immediately
@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!voteid) {
         alert("Session expired or unauthorized access.");
         window.location.href = "voting.html";
-        return; 
+        return;
     }
 
     try {
@@ -110,14 +110,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 });
 
                 showMsg("✅ Vote submitted successfully!", "success");
-                
+
                 // FIX: Use removeItem instead of clear() to remove specific keys
                 sessionStorage.removeItem("isvoted");
                 sessionStorage.removeItem("vote_found");
                 sessionStorage.removeItem("aadhar_found");
-                
+
                 disableAll();
-                
+                await setDoc(docRef, {
+                    access: false
+                });
                 // Add a small delay so they can read the success message
                 setTimeout(() => {
                     window.location.href = "voting.html"; // Make sure to add .html

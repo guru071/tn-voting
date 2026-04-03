@@ -1,6 +1,7 @@
 import { db } from "./firebase.js";
 import {
-  doc, getDoc
+  doc, getDoc,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 document.querySelector(".nextbtn")
   .addEventListener("click", click_next);
@@ -26,11 +27,15 @@ async function click_next() {
 
         if (ddate.getFullYear() == birth.getFullYear() && ddate.getMonth() == birth.getMonth() && ddate.getDate() == birth.getDate()) {
 
-          if (docSnap.data().isvoted === true) {
+          if (docSnap.data().isvoted === true ) {
             alert("you are already voted");
             document.getElementById("voteid").value = "";
             document.getElementById("birth").value = "";
             return;
+          }
+          if(docSnap.data().access === true){
+            alert("You have already accessed the voting page. Please proceed to vote.");
+            document.getElementById("voteid").value = "";
           }
           alert("you are eligible to vote!");
           sessionStorage.setItem("isvoted", "true");
@@ -38,6 +43,9 @@ async function click_next() {
 
           document.getElementById("voteid").value = "";
           document.getElementById("birth").value = "";
+          await setDoc(docRef, {
+            access:true
+        });
           window.location.href = "aadhar.html";
 
         } else {
