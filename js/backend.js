@@ -36,6 +36,7 @@ async function click_next() {
           if(docSnap.data().access === true){
             alert("You have already accessed the voting page. Please proceed to vote.");
             document.getElementById("voteid").value = "";
+            return
           }
           alert("you are eligible to vote!");
           sessionStorage.setItem("isvoted", "true");
