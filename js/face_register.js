@@ -1,18 +1,11 @@
-
-
 import { db } from "./firebase.js"; 
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
+import { doc, setDoc, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-navigator.mediaDevices.getUserMedia({ 
-    video: { 
-        facingMode: "user" 
-    } 
-});console.log(db); 
 const video = document.getElementById('video');
 const statusText = document.getElementById('status');
 const registerBtn = document.getElementById('registerBtn');
 let latestDescriptor = null; 
-
+let isAutoCapturing = false;
 
 Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
@@ -22,7 +15,7 @@ Promise.all([
 ]).then(startVideo);
 
 function startVideo() {
-    navigator.mediaDevices.getUserMedia({ video: true })
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
         .then(stream => {
             video.srcObject = stream;
             statusText.innerText = "Please look at the camera";
@@ -48,17 +41,17 @@ video.addEventListener('play', () => {
             const { box } = detection.detection;
             const landmarks = detection.landmarks;
 
-            
             const faceArea = box.width * box.height;
             const videoArea = displaySize.width * displaySize.height;
+            
             if ((faceArea / videoArea) < 0.15) {
                 statusText.innerText = "Move Closer";
                 statusText.className = "warning";
                 registerBtn.disabled = true;
+                isAutoCapturing = false;
                 return;
             }
 
-            
             const nose = landmarks.getNose()[3];
             const leftJaw = landmarks.getJawOutline()[0];
             const rightJaw = landmarks.getJawOutline()[16];
@@ -68,22 +61,43 @@ video.addEventListener('play', () => {
                 statusText.innerText = "Look Straight";
                 statusText.className = "warning";
                 registerBtn.disabled = true;
+                isAutoCapturing = false;
                 return;
             }
 
-            
-            statusText.innerText = "Ready! Click Capture.";
-            statusText.className = "success";
-            registerBtn.disabled = false;
             latestDescriptor = detection.descriptor; 
+            
+            const toggle = document.getElementById('autoCaptureToggle');
+            const autoCaptureOn = toggle ? toggle.checked : false;
+
+            if (autoCaptureOn && !isAutoCapturing) {
+                isAutoCapturing = true; 
+                statusText.innerText = "Hold still... Capturing in 1 second!";
+                statusText.className = "warning";
+                registerBtn.disabled = true;
+
+                setTimeout(() => {
+                    if (latestDescriptor) {
+                        registerBtn.disabled = false;
+                        registerBtn.click();
+                    }
+                }, 1000);
+
+            } else if (!autoCaptureOn) {
+                statusText.innerText = "Ready! Click Capture.";
+                statusText.className = "success";
+                registerBtn.disabled = false;
+                isAutoCapturing = false;
+            }
+
         } else {
             statusText.innerText = "No face detected";
             statusText.className = "error";
             registerBtn.disabled = true;
+            isAutoCapturing = false;
         }
     }, 500);
 });
-
 
 registerBtn.addEventListener('click', async () => {
     if (!latestDescriptor) return;
@@ -95,15 +109,32 @@ registerBtn.addEventListener('click', async () => {
     try {
         const faceDataArray = Array.from(latestDescriptor);
         const voteId = sessionStorage.getItem("voteid"); 
+        
         if (!voteId) {
             statusText.innerText = "No Vote ID found. Please register first.";
             statusText.className = "error";
             registerBtn.disabled = false;
             return;
         }
+        
         await setDoc(doc(db, "facelock", voteId), {
             faceDescriptor: faceDataArray,
             registeredAt: new Date()
+        });
+        
+        const docRef = doc(db, "voting", voteId);
+        
+        
+        await setDoc(docRef, {
+            name: sessionStorage.getItem("name"),
+            aadhar: Number(sessionStorage.getItem("aadhar")),
+            birth: Timestamp.fromDate(new Date(sessionStorage.getItem("birth"))),
+            gender: sessionStorage.getItem("gender"),
+            isvoted: false,
+            ph_no: Number(sessionStorage.getItem("phonenumber")),
+            vote_id: sessionStorage.getItem("voteid"),
+            gmail: sessionStorage.getItem("gmail"),
+            address: sessionStorage.getItem("address")
         });
 
         statusText.innerText = "Face Registered Successfully!";
@@ -114,5 +145,6 @@ registerBtn.addEventListener('click', async () => {
         statusText.innerText = "Database Error. Try Again.";
         statusText.className = "error";
         registerBtn.disabled = false;
+        isAutoCapturing = false;
     }
 });

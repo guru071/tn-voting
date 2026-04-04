@@ -90,17 +90,14 @@ async function insertdata() {
         }
 
         
-        await setDoc(docRef, {
-            name: name,
-            aadhar: Number(aadhar),
-            birth: Timestamp.fromDate(new Date(birth)),
-            gender: gender,
-            isvoted: false,
-            ph_no: Number(ph_no),
-            vote_id: vote_id,
-            gmail: gmail,
-            address: address
-        });
+        sessionStorage.setItem("voteid", vote_id);
+        sessionStorage.setItem(name, name);
+        sessionStorage.setItem(aadhar, aadhar);
+        sessionStorage.setItem(birth, birth);
+        sessionStorage.setItem(ph_no, ph_no);
+        sessionStorage.setItem(gmail, gmail);
+        sessionStorage.setItem(gender,  gender);
+        sessionStorage.setItem(address, address);
 
         message.innerHTML = "<span class='success'>Registration Successful!</span>";
 
