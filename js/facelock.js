@@ -1,13 +1,48 @@
 import { db } from "./firebase.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-window.onload = function () {
+let isNavigating = false;
+
+window.onload = async function () {
   const vote_found = sessionStorage.getItem("vote_found");
   const isvoted = sessionStorage.getItem("isvoted");
   const aadhar_found = sessionStorage.getItem("aadhar_found");
+  const voteid = sessionStorage.getItem("voteid");
+
   if (vote_found !== "true" && isvoted !== "true" && aadhar_found !== "true") {
     alert("Unauthorized access");
+    isNavigating = true;
     window.location.href = "voting.html";
+    return;
+  }
+
+  if (voteid) {
+    const docRef = doc(db, "voting", voteid);
+    
+    window.addEventListener("offline", async () => {
+      await updateDoc(docRef, { access: false });
+    });
+
+    window.addEventListener("online", async () => {
+      const currentSnap = await getDoc(docRef);
+      if (currentSnap.exists() && currentSnap.data().access !== true) {
+        await updateDoc(docRef, { access: true });
+      }
+    });
+
+    window.addEventListener("beforeunload", () => {
+      if (!isNavigating) {
+        navigator.sendBeacon("/log", "user_leaving"); 
+        updateDoc(docRef, { access: false });
+      }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && !isNavigating) {
+        navigator.sendBeacon('/api/exit-endpoint', "hidden");
+        updateDoc(docRef, { access: false });
+      }
+    });
   }
 };
 
@@ -33,7 +68,6 @@ async function fetchFaceFromDatabase() {
 
     if (docSnap.exists()) {
       const faceDataArray = docSnap.data().faceDescriptor;
-      console.log("Data from Firebase:", faceDataArray);
       savedDescriptor = new Float32Array(faceDataArray);
       startVideo();
     } else {
@@ -41,7 +75,7 @@ async function fetchFaceFromDatabase() {
       statusText.className = "error";
     }
   } catch (error) {
-    console.error("Error getting document:", error);
+    console.error(error);
     statusText.innerText = "Error connecting to database.";
     statusText.className = "error";
   }
@@ -65,7 +99,6 @@ function getEAR(eye) {
 }
 
 video.addEventListener('play', async () => {
-  // SAFETY CHECK: Ensure database data loaded before proceeding
   if (!savedDescriptor) return; 
 
   const canvas = document.getElementById('canvas');
@@ -80,9 +113,8 @@ video.addEventListener('play', async () => {
   const faceMatcher = new faceapi.FaceMatcher(labeledFace, 0.55);
   statusText.innerText = "Please look and blink to unlock";
 
-  // NEW: Continuous Loop using requestAnimationFrame
   async function runDetection() {
-    if (unlocked) return; // Stop scanning if already unlocked
+    if (unlocked) return;
 
     const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks()
@@ -98,7 +130,6 @@ video.addEventListener('play', async () => {
       const rightEye = detection.landmarks.getRightEye();
       const avgEAR = (getEAR(leftEye) + getEAR(rightEye)) / 2;
 
-      // MORE FORGIVING BLINK CHECK: Raised to 0.30
       if (avgEAR < 0.30) { blinkDetected = true; }
 
       const match = faceMatcher.findBestMatch(detection.descriptor);
@@ -110,22 +141,19 @@ video.addEventListener('play', async () => {
         statusText.innerText = `Identity Confirmed. Please BLINK.`;
         statusText.className = "warning";
       } else {
-        // UNLOCK SUCCESS
         unlocked = true;
         statusText.innerText = `Unlocked! (Est. Age: ${Math.round(detection.age)})`;
         statusText.className = "success";
         canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
         
-        // Move instantly to the next page
+        isNavigating = true;
         window.location.href = "info.html";
-        return; // Kill the loop completely
+        return;
       }
     }
     
-    // Immediately fire the next frame
     requestAnimationFrame(runDetection);
   }
 
-  // Start the continuous loop
   runDetection();
 });
