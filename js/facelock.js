@@ -1,5 +1,3 @@
-
-
 import { db } from "./firebase.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
 
@@ -18,7 +16,6 @@ const statusText = document.getElementById('status');
 let blinkDetected = false;
 let unlocked = false;
 let savedDescriptor = null;
-
 
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
@@ -68,6 +65,9 @@ function getEAR(eye) {
 }
 
 video.addEventListener('play', async () => {
+  // SAFETY CHECK: Ensure database data loaded before proceeding
+  if (!savedDescriptor) return; 
+
   const canvas = document.getElementById('canvas');
   const displaySize = { width: video.width || 640, height: video.height || 480 };
   faceapi.matchDimensions(canvas, displaySize);
@@ -80,8 +80,9 @@ video.addEventListener('play', async () => {
   const faceMatcher = new faceapi.FaceMatcher(labeledFace, 0.55);
   statusText.innerText = "Please look and blink to unlock";
 
-  const interval = setInterval(async () => {
-    if (unlocked) return;
+  // NEW: Continuous Loop using requestAnimationFrame
+  async function runDetection() {
+    if (unlocked) return; // Stop scanning if already unlocked
 
     const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks()
@@ -97,7 +98,8 @@ video.addEventListener('play', async () => {
       const rightEye = detection.landmarks.getRightEye();
       const avgEAR = (getEAR(leftEye) + getEAR(rightEye)) / 2;
 
-      if (avgEAR < 0.25) { blinkDetected = true; }
+      // MORE FORGIVING BLINK CHECK: Raised to 0.30
+      if (avgEAR < 0.30) { blinkDetected = true; }
 
       const match = faceMatcher.findBestMatch(detection.descriptor);
 
@@ -108,13 +110,22 @@ video.addEventListener('play', async () => {
         statusText.innerText = `Identity Confirmed. Please BLINK.`;
         statusText.className = "warning";
       } else {
+        // UNLOCK SUCCESS
         unlocked = true;
-        clearInterval(interval);
         statusText.innerText = `Unlocked! (Est. Age: ${Math.round(detection.age)})`;
         statusText.className = "success";
         canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Move instantly to the next page
         window.location.href = "info.html";
+        return; // Kill the loop completely
       }
     }
-  }, 150);
+    
+    // Immediately fire the next frame
+    requestAnimationFrame(runDetection);
+  }
+
+  // Start the continuous loop
+  runDetection();
 });
