@@ -49,7 +49,7 @@ async function aadhar_page() {
         document
     .getElementById("aadharno")
     .value="";
-        window.location.href ="info.html";
+        window.location.href ="facelock.html";
       }else{
         alert("Record not founded");
       }
