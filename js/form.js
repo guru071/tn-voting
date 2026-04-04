@@ -9,7 +9,7 @@ import {
     where,
     getDocs,
     Timestamp
-} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
 
 const message = document.getElementById("message");
 
@@ -24,7 +24,7 @@ async function insertdata() {
     const gender = document.getElementById("gender").value.trim().toLowerCase();
     const address = document.getElementById("address").value.trim();
     function isValidVoterId(voteId) {
-        // This regex means: Start with exactly 3 letters, followed by 1 or more numbers until the end.
+        
         const regex = /^[a-zA-Z]{3}\d+$/;
 
         return regex.test(voteId);
@@ -49,7 +49,7 @@ async function insertdata() {
         message.innerHTML = "<span class='error'>Invalid Voter ID!</span>";
         return;
     }
-    // AGE CHECK
+    
     const today = new Date();
     const birthDate = new Date(birth);
 
@@ -67,7 +67,7 @@ async function insertdata() {
 
     try {
 
-        // 🔥 Check if Vote ID already exists
+        
         const docRef = doc(db, "voting", vote_id);
         const docSnap = await getDoc(docRef);
 
@@ -76,7 +76,7 @@ async function insertdata() {
             return;
         }
 
-        // 🔥 Check if Aadhar already exists
+        
         const q = query(
             collection(db, "voting"),
             where("aadhar", "==", aadhar)
@@ -89,7 +89,7 @@ async function insertdata() {
             return;
         }
 
-        // ✅ Insert Data
+        
         await setDoc(docRef, {
             name: name,
             aadhar: Number(aadhar),

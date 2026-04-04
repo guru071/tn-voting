@@ -1,7 +1,7 @@
 import { db } from "./firebase.js";
 import {
     doc, getDoc
-} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
 async function loadInfo() {
     const voteid = sessionStorage.getItem("voteid");
     const docRef = doc(db, "voting", voteid);

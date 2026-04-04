@@ -1,19 +1,19 @@
 
-// 1. Import Firebase
-import { db } from "./firebase.js"; // Assuming you have a separate firebase.js file for initialization
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-// NEW CODE
+
+import { db } from "./firebase.js"; 
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
+
 navigator.mediaDevices.getUserMedia({ 
     video: { 
-        facingMode: "user" // "user" means the front selfie camera
+        facingMode: "user" 
     } 
-});console.log(db); // Debugging line to check if db is imported correctly
+});console.log(db); 
 const video = document.getElementById('video');
 const statusText = document.getElementById('status');
 const registerBtn = document.getElementById('registerBtn');
-let latestDescriptor = null; // Store the face data temporarily
+let latestDescriptor = null; 
 
-// Load Models
+
 Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri('../models'),
     faceapi.nets.faceLandmark68Net.loadFromUri('../models'),
@@ -48,7 +48,7 @@ video.addEventListener('play', () => {
             const { box } = detection.detection;
             const landmarks = detection.landmarks;
 
-            // Distance Check
+            
             const faceArea = box.width * box.height;
             const videoArea = displaySize.width * displaySize.height;
             if ((faceArea / videoArea) < 0.15) {
@@ -58,7 +58,7 @@ video.addEventListener('play', () => {
                 return;
             }
 
-            // Pose Check
+            
             const nose = landmarks.getNose()[3];
             const leftJaw = landmarks.getJawOutline()[0];
             const rightJaw = landmarks.getJawOutline()[16];
@@ -71,11 +71,11 @@ video.addEventListener('play', () => {
                 return;
             }
 
-            // All checks passed
+            
             statusText.innerText = "Ready! Click Capture.";
             statusText.className = "success";
             registerBtn.disabled = false;
-            latestDescriptor = detection.descriptor; // Save current scan for the button
+            latestDescriptor = detection.descriptor; 
         } else {
             statusText.innerText = "No face detected";
             statusText.className = "error";
@@ -84,7 +84,7 @@ video.addEventListener('play', () => {
     }, 500);
 });
 
-// 3. Button Click Event (Save to Firebase)
+
 registerBtn.addEventListener('click', async () => {
     if (!latestDescriptor) return;
 
@@ -94,7 +94,7 @@ registerBtn.addEventListener('click', async () => {
 
     try {
         const faceDataArray = Array.from(latestDescriptor);
-        const voteId = sessionStorage.getItem("voteid"); // Get vote ID from session or use a default
+        const voteId = sessionStorage.getItem("voteid"); 
         if (!voteId) {
             statusText.innerText = "No Vote ID found. Please register first.";
             statusText.className = "error";

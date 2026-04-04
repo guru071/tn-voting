@@ -1,13 +1,13 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
 import { 
     getFirestore, 
     doc,
     setDoc,
     getDoc,
     Timestamp 
-} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
 
-// 🔹 Your Firebase Config
+
 const firebaseConfig = {
                 apiKey: "AIzaSyBjm6WKCRmUNILEub4lKecRx11Lwvf-koM",
     authDomain: "tn-voting-d09c5.firebaseapp.com",

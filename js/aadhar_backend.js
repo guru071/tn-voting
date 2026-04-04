@@ -39,8 +39,11 @@ async function aadhar_page() {
     alert("Valid Aadhaar");
     try {
       const voteid = sessionStorage.getItem("voteid");
-      const docRef = await doc(db, "voting", voteid);
+      
+      
+      const docRef = doc(db, "voting", voteid); 
       const docSnap = await getDoc(docRef);
+      
       if (docSnap.exists()) {
 
         window.addEventListener("offline", async () => {
@@ -62,7 +65,7 @@ async function aadhar_page() {
           }
         });
         window.addEventListener("beforeunload", async () => {
-          navigator.sendBeacon("/log"); // optional
+          navigator.sendBeacon("/log"); 
           await updateDoc(docRef, {
             access: false
           });
@@ -70,9 +73,11 @@ async function aadhar_page() {
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'hidden') {
 
-            navigator.sendBeacon('/api/exit-endpoint', updateDoc(docRef, {
+            
+            navigator.sendBeacon('/api/exit-endpoint', "hidden");
+            updateDoc(docRef, {
               access: false
-            }));
+            });
           }
         });
         if (Number(docSnap.data().aadhar) === Number(aadharNo)) {

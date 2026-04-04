@@ -1,7 +1,7 @@
 
-// 1. Import Firebase
-import { db } from "./firebase.js"; // Assuming you have a separate firebase.js file for initialization
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+import { db } from "./firebase.js"; 
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
 
 window.onload = function () {
   const vote_found = sessionStorage.getItem("vote_found");
@@ -12,10 +12,10 @@ window.onload = function () {
     window.location.href = "voting.html";
   }
 };
-// NEW CODE
+
 navigator.mediaDevices.getUserMedia({ 
     video: { 
-        facingMode: "user" // "user" means the front selfie camera
+        facingMode: "user" 
     } 
 });
 const video = document.getElementById('video');
@@ -24,7 +24,7 @@ let blinkDetected = false;
 let unlocked = false;
 let savedDescriptor = null;
 
-// Load Models
+
 Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri('../models'),
     faceapi.nets.faceLandmark68Net.loadFromUri('../models'),

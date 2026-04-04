@@ -20,7 +20,7 @@ thead{
         border-radius: 5px;
 }
 body {
-    background-image: url("./assests/images/tn5.jpg");
+    background-image: url("../assests/images/tn5.jpg");
   min-height: 100vh;
   width: 100%;
 display: flex;
