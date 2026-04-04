@@ -2,8 +2,12 @@
 // 1. Import Firebase
 import { db } from "./firebase.js"; // Assuming you have a separate firebase.js file for initialization
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-navigator.mediaDevices.getUserMedia({ video: true })
-console.log(db); // Debugging line to check if db is imported correctly
+// NEW CODE
+navigator.mediaDevices.getUserMedia({ 
+    video: { 
+        facingMode: "user" // "user" means the front selfie camera
+    } 
+});console.log(db); // Debugging line to check if db is imported correctly
 const video = document.getElementById('video');
 const statusText = document.getElementById('status');
 const registerBtn = document.getElementById('registerBtn');
