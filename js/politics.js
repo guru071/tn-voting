@@ -3,6 +3,8 @@ import { doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.
 
 document.addEventListener("DOMContentLoaded", async () => {
 
+    let isNavigating = false;
+
     const vote_found = sessionStorage.getItem("vote_found");
     const isvoted = sessionStorage.getItem("isvoted");
     const aadhar_found = sessionStorage.getItem("aadhar_found");
@@ -11,51 +13,44 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!voteid) {
         alert("Session expired or unauthorized access.");
+        isNavigating = true;
         window.location.href = "voting.html";
         return;
     }
 
     try {
-  
         const docRef = doc(db, "voting", voteid);
         const docSnap = await getDoc(docRef);
 
         if (!docSnap.exists()) {
             alert("Voter record not found.");
+            isNavigating = true;
             window.location.href = "voting.html";
             return;
         }
 
         window.addEventListener("offline", async () => {
-            console.log("Offline");
-            await updateDoc(docRef, {
-                access: false
-            });
+            await updateDoc(docRef, { access: false });
         });
 
         window.addEventListener("online", async () => {
-            console.log("Back Online");
-            const access = docSnap.data().access;
-            if (access !== true) {
-                await updateDoc(docRef, {
-                    access: true
-                });
+            const currentSnap = await getDoc(docRef);
+            if (currentSnap.exists() && currentSnap.data().access !== true) {
+                await updateDoc(docRef, { access: true });
             }
         });
 
-        window.addEventListener("beforeunload", async () => {
-            navigator.sendBeacon("/log"); 
-            await updateDoc(docRef, {
-                access: false
-            });
+        window.addEventListener("beforeunload", () => {
+            if (!isNavigating) {
+                navigator.sendBeacon("/log", "user_leaving"); 
+                updateDoc(docRef, { access: false });
+            }
         });
 
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') {
+            if (document.visibilityState === 'hidden' && !isNavigating) {
                 navigator.sendBeacon('/api/exit-endpoint', "hidden");
-                updateDoc(docRef, {
-                    access: false
-                });
+                updateDoc(docRef, { access: false });
             }
         });
 
@@ -63,12 +58,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (vote_found !== "true" && isvoted !== "true" && aadhar_found !== "true" && data.isvoted !== true && info_loaded !== "true") {
             alert("Unauthorized access");
+            isNavigating = true;
             window.location.href = "voting.html";
             return;
         }
 
         if (data.isvoted === true) {
             alert("You have already cast your vote.");
+            isNavigating = true;
             window.location.href = "voting.html";
             return;
         }
@@ -78,7 +75,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         const submitBtn = document.getElementById("submitBtn");
         const message = document.getElementById("message");
 
-    
         let selectedRow = null;
         let confirmed = false;
 
@@ -87,7 +83,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (confirmed) return;
 
                 rows.forEach(r => r.classList.remove("selected"));
-
                 row.classList.add("selected");
 
                 const radio = row.querySelector("input");
@@ -137,10 +132,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 sessionStorage.removeItem("aadhar_found");
 
                 disableAll();
-                await updateDoc(docRef, {
-                    access: false
-                });
+                await updateDoc(docRef, { access: false });
+                
                 setTimeout(() => {
+                    isNavigating = true;
                     window.location.href = "voting.html"; 
                 }, 1500);
 
@@ -151,7 +146,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
-        
         function showMsg(text, type) {
             message.style.display = "block";
             message.className = type;
@@ -166,7 +160,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
     } catch (error) {
-        console.error("Error loading profile:", error);
+        console.error(error);
         alert("An error occurred connecting to the server.");
     }
 });

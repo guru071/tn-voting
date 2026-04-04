@@ -5,8 +5,8 @@ import {
 
 document.querySelector(".nextbtn").addEventListener("click", click_next);
 
-
 let listenersAdded = false; 
+let isNavigating = false; 
 
 async function click_next() {
   const voteid = document.getElementById("voteid").value;
@@ -23,7 +23,6 @@ async function click_next() {
     const docRef = doc(db, "voting", voteid);
     const docSnap = await getDoc(docRef);
 
-    
     if (!docSnap.exists()) {
       alert("Invalid Login Details");
       return;
@@ -34,7 +33,6 @@ async function click_next() {
     if (voteid == data.vote_id) {
       const ddate = data.birth.toDate();
 
-      
       if (!listenersAdded) {
         listenersAdded = true;
 
@@ -45,7 +43,6 @@ async function click_next() {
 
         window.addEventListener("online", async () => {
           console.log("Back Online");
-          
           const currentSnap = await getDoc(docRef);
           if (currentSnap.exists() && currentSnap.data().access !== true) {
             await updateDoc(docRef, { access: true });
@@ -53,13 +50,14 @@ async function click_next() {
         });
 
         window.addEventListener("beforeunload", () => {
-          navigator.sendBeacon("/log", "user_leaving"); 
-          updateDoc(docRef, { access: false });
+          if (!isNavigating) {
+            navigator.sendBeacon("/log", "user_leaving"); 
+            updateDoc(docRef, { access: false });
+          }
         });
 
         document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'hidden') {
-            
+          if (document.visibilityState === 'hidden' && !isNavigating) {
             navigator.sendBeacon('/api/exit-endpoint', "hidden"); 
             updateDoc(docRef, { access: false });
           }
@@ -75,21 +73,35 @@ async function click_next() {
           return;
         }
 
+        const myLocalToken = localStorage.getItem("vote_token_" + voteid);
+
         if (data.access === true) {
-          alert("You have already accessed the voting page. Please proceed to vote.");
-          document.getElementById("voteid").value = "";
-          return;
+          if (data.session_token === myLocalToken && myLocalToken !== null) {
+            console.log("Recovering offline session...");
+          } else {
+            alert("You are already logged in on another device or tab.");
+            document.getElementById("voteid").value = "";
+            return;
+          }
         }
 
         alert("you are eligible to vote!");
         sessionStorage.setItem("isvoted", "true");
         sessionStorage.setItem("vote_found", "true");
         
-        
         document.getElementById("voteid").value = "";
         document.getElementById("birth").value = "";
         
-        await updateDoc(docRef, { access: true });
+        isNavigating = true; 
+        
+        const newSecretToken = "sess_" + Date.now() + "_" + Math.random().toString(36).substring(2);
+        localStorage.setItem("vote_token_" + voteid, newSecretToken);
+
+        await updateDoc(docRef, { 
+            access: true,
+            session_token: newSecretToken 
+        });
+
         window.location.href = "aadhar.html";
 
       } else {
