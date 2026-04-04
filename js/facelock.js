@@ -12,6 +12,7 @@ window.onload = function () {
     window.location.href = "voting.html";
   }
 };
+navigator.mediaDevices.getUserMedia({ video: true })
 const video = document.getElementById('video');
 const statusText = document.getElementById('status');
 let blinkDetected = false;
