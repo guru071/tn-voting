@@ -1,5 +1,4 @@
 import { db } from "./firebase.js";
-
 import {
     doc,
     getDoc,
@@ -23,18 +22,17 @@ async function insertdata() {
     const gmail = document.getElementById("gmail").value.trim();
     const gender = document.getElementById("gender").value.trim().toLowerCase();
     const address = document.getElementById("address").value.trim();
+    
     function isValidVoterId(voteId) {
-        
         const regex = /^[a-zA-Z]{3}\d+$/;
-
         return regex.test(voteId);
-    }
-    if (gender !== "male" && gender !== "female" && gender !== "other") {
-        message.innerHTML = "<span class='error'>Invalid gender!</span>";
-        return;
     }
     if (!name || !aadhar || !birth || !ph_no || !vote_id || !gmail || !gender || !address) {
         message.innerHTML = "<span class='error'>All fields are required!</span>";
+        return;
+    }
+    if (gender !== "male" && gender !== "female" && gender !== "other") {
+        message.innerHTML = "<span class='error'>Invalid gender!</span>";
         return;
     }
     if (aadhar.length != 12 || isNaN(aadhar)) {
@@ -67,7 +65,6 @@ async function insertdata() {
 
     try {
 
-        
         const docRef = doc(db, "voting", vote_id);
         const docSnap = await getDoc(docRef);
 
@@ -76,7 +73,6 @@ async function insertdata() {
             return;
         }
 
-        
         const q = query(
             collection(db, "voting"),
             where("aadhar", "==", aadhar)
@@ -89,15 +85,14 @@ async function insertdata() {
             return;
         }
 
-        
         sessionStorage.setItem("voteid", vote_id);
-        sessionStorage.setItem(name, name);
-        sessionStorage.setItem(aadhar, aadhar);
-        sessionStorage.setItem(birth, birth);
-        sessionStorage.setItem(ph_no, ph_no);
-        sessionStorage.setItem(gmail, gmail);
-        sessionStorage.setItem(gender,  gender);
-        sessionStorage.setItem(address, address);
+        sessionStorage.setItem("name", name);
+        sessionStorage.setItem("aadhar", aadhar);
+        sessionStorage.setItem("birth", birth);
+        sessionStorage.setItem("phonenumber", ph_no);
+        sessionStorage.setItem("gmail", gmail);
+        sessionStorage.setItem("gender", gender);
+        sessionStorage.setItem("address", address);
 
         message.innerHTML = "<span class='success'>Registration Successful!</span>";
 
@@ -109,12 +104,12 @@ async function insertdata() {
         document.getElementById("gmail").value = "";
         document.getElementById("gender").value = "";
         document.getElementById("address").value = "";
-        sessionStorage.setItem("voteid", vote_id);
+        sessionStorage.setItem("info_entered", "true");
         window.location.href = "face_register.html";
+        
     } catch (error) {
         message.innerHTML = "<span class='error'>" + error.message + "</span>";
     }
 }
 
-document.getElementById("submitBtn")
-    .addEventListener("click", insertdata);
+document.getElementById("submitBtn").addEventListener("click", insertdata);

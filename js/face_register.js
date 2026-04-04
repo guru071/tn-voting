@@ -1,6 +1,12 @@
 import { db } from "./firebase.js"; 
 import { doc, setDoc, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-
+window.onload = function () {
+    const infoEntered = sessionStorage.getItem("info_entered");
+    if (infoEntered !== "true") {
+        alert("Please fill the form first!");
+        window.location.href = "form.html";
+    }
+}
 const video = document.getElementById('video');
 const statusText = document.getElementById('status');
 const registerBtn = document.getElementById('registerBtn');
@@ -124,7 +130,7 @@ registerBtn.addEventListener('click', async () => {
         
         const docRef = doc(db, "voting", voteId);
         
-        
+        console.log(sessionStorage.getItem("name"), sessionStorage.getItem("aadhar"), sessionStorage.getItem("birth"), sessionStorage.getItem("gender"), sessionStorage.getItem("phonenumber"), sessionStorage.getItem("gmail"), sessionStorage.getItem("address"));
         await setDoc(docRef, {
             name: sessionStorage.getItem("name"),
             aadhar: Number(sessionStorage.getItem("aadhar")),
