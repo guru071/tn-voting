@@ -7,6 +7,7 @@ import {
     Timestamp 
 } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
+// 🔹 Your Firebase Config
 const firebaseConfig = {
                 apiKey: "AIzaSyBjm6WKCRmUNILEub4lKecRx11Lwvf-koM",
     authDomain: "tn-voting-d09c5.firebaseapp.com",
