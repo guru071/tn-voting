@@ -41,7 +41,7 @@ async function click_next() {
           alert("you are eligible to vote!");
           sessionStorage.setItem("isvoted", "true");
           sessionStorage.setItem("vote_found", "true");
-
+          sessionStorage.setItem("")
           document.getElementById("voteid").value = "";
           document.getElementById("birth").value = "";
           await updateDoc(docRef, {

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Face Lock - Register</title>
+    <link rel="stylesheet" href="./css/facelock.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+</head>
+
+<body>
+
+    <h2>Register Face ID</h2>
+    <div class="container">
+        <video id="video" autoplay muted></video>
+        <canvas id="canvas"></canvas>
+        <div id="status" class="warning">Loading AI Models...</div>
+        <button id="registerBtn" disabled>Capture Face</button>
+    </div>
+
+    <div class="nav-links">
+    </div>
+    <script type="module" src="./js/face_register.js"></script>
+</body>
+
+</html>

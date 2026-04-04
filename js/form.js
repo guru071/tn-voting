@@ -112,6 +112,8 @@ async function insertdata() {
         document.getElementById("gmail").value = "";
         document.getElementById("gender").value = "";
         document.getElementById("address").value = "";
+        sessionStorage.setItem("voteid", vote_id);
+        window.location.href = "face_register.html";
     } catch (error) {
         message.innerHTML = "<span class='error'>" + error.message + "</span>";
     }
