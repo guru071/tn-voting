@@ -1,6 +1,6 @@
 
 
-import { db } from "./firebase.js"; 
+import { db } from "./firebase.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
 
 window.onload = function () {
@@ -13,11 +13,6 @@ window.onload = function () {
   }
 };
 
-navigator.mediaDevices.getUserMedia({ 
-    video: { 
-        facingMode: "user" 
-    } 
-});
 const video = document.getElementById('video');
 const statusText = document.getElementById('status');
 let blinkDetected = false;
@@ -26,21 +21,22 @@ let savedDescriptor = null;
 
 
 Promise.all([
-    faceapi.nets.tinyFaceDetector.loadFromUri('../models'),
-    faceapi.nets.faceLandmark68Net.loadFromUri('../models'),
-    faceapi.nets.faceRecognitionNet.loadFromUri('../models'),
-    faceapi.nets.ageGenderNet.loadFromUri('../models') 
-]).then(startVideo);
+  faceapi.nets.tinyFaceDetector.loadFromUri('../models'),
+  faceapi.nets.faceLandmark68Net.loadFromUri('../models'),
+  faceapi.nets.faceRecognitionNet.loadFromUri('../models'),
+  faceapi.nets.ageGenderNet.loadFromUri('../models')
+]).then(fetchFaceFromDatabase);
 
 async function fetchFaceFromDatabase() {
   statusText.innerText = "Connecting to Database...";
   try {
     const voteid = sessionStorage.getItem("voteid");
-    const docRef = doc(db, "facelock",voteid);
+    const docRef = doc(db, "facelock", voteid);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
       const faceDataArray = docSnap.data().faceDescriptor;
+      console.log("Data from Firebase:", faceDataArray);
       savedDescriptor = new Float32Array(faceDataArray);
       startVideo();
     } else {
@@ -55,7 +51,7 @@ async function fetchFaceFromDatabase() {
 }
 
 function startVideo() {
-  navigator.mediaDevices.getUserMedia({ video: true })
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
     .then(stream => { video.srcObject = stream; })
     .catch(err => console.error(err));
 }
@@ -76,8 +72,12 @@ video.addEventListener('play', async () => {
   const displaySize = { width: video.width || 640, height: video.height || 480 };
   faceapi.matchDimensions(canvas, displaySize);
 
-  const faceMatcher = new faceapi.FaceMatcher(savedDescriptor, 0.55);
+  const labeledFace = new faceapi.LabeledFaceDescriptors(
+    "Authorized User",
+    [savedDescriptor]
+  );
 
+  const faceMatcher = new faceapi.FaceMatcher(labeledFace, 0.55);
   statusText.innerText = "Please look and blink to unlock";
 
   const interval = setInterval(async () => {
