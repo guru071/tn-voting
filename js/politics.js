@@ -23,6 +23,39 @@ document.addEventListener("DOMContentLoaded", async () => {
         const docSnap = await getDoc(docRef);
 
         if (!docSnap.exists()) {
+
+            window.addEventListener("offline", async () => {
+                console.log("Offline");
+                await updateDoc(docRef, {
+                    access: false
+                });
+            });
+
+            window.addEventListener("online", async () => {
+                console.log("Back Online");
+
+                const access = docSnap.data().access;
+
+                if (access !== true) {
+                    await updateDoc(docRef, {
+                        access: true
+                    });
+                }
+            });
+            window.addEventListener("beforeunload", async () => {
+                navigator.sendBeacon("/log"); // optional
+                await updateDoc(docRef, {
+                    access: false
+                });
+            });
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+
+                    navigator.sendBeacon('/api/exit-endpoint', updateDoc(docRef, {
+                        access: false
+                    }));
+                }
+            });
             alert("Voter record not found.");
             window.location.href = "voting.html";
             return;
