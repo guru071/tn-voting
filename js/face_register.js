@@ -117,6 +117,7 @@ async function uploadToCloudinary(videoElement, voteId) {
             formData.append('file', blob, 'face.jpg');
             formData.append('upload_preset', UPLOAD_PRESET);
             formData.append('public_id', `${voteId}_profile`);
+            formData.append('folder', 'vote_faces');
             
             try {
                 const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
