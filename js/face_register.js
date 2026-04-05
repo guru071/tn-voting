@@ -1,5 +1,6 @@
+// face_register.js
 import { db } from "./firebase.js";
-import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 const CLOUD_NAME = 'ddg6utnk9';
 const UPLOAD_PRESET = 'tn voting';
@@ -12,13 +13,16 @@ let unlocked = false;
 let savedDescriptor = null;
 
 window.onload = async function () {
-  const vote_found = sessionStorage.getItem("info_entered");
-  if (vote_found !== "true") {
+  const info_entered = sessionStorage.getItem("info_entered");
+  
+
+  if (info_entered !== "true") {
     alert("Unauthorized access");
     isNavigating = true;
     window.location.href = "form.html";
     return;
   }
+
 };
 
 Promise.all([
@@ -82,7 +86,7 @@ async function captureAndUploadFace(videoElement, voteId) {
             formData.append('file', blob, 'capture.jpg'); 
             formData.append('upload_preset', UPLOAD_PRESET);
             formData.append('public_id', customName);
-            formData.append('folder', 'voter_faces');
+            formData.append('folder', 'voter_live_faces');
 
             try {
                 const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
@@ -105,10 +109,18 @@ async function captureAndUploadFace(videoElement, voteId) {
 
 async function registerFinalDocument(voteId, imageUrl) {
     const docRef = doc(db, "voting", voteId);
-    await updateDoc(docRef, {
+    const finalDocumentData = {
+        name: sessionStorage.getItem("name"),
+        aadhar: sessionStorage.getItem("aadhar"),
+        birth: sessionStorage.getItem("birth"),
+        phonenumber: sessionStorage.getItem("phonenumber"),
+        gmail: sessionStorage.getItem("gmail"),
+        gender: sessionStorage.getItem("gender"),
+        address: sessionStorage.getItem("address"),
         faceImageUrl: imageUrl,
-        verifiedAt: new Date()
-    });
+        registeredAt: new Date()
+    };
+    await setDoc(docRef, finalDocumentData);
 }
 
 video.addEventListener('play', async () => {
@@ -161,6 +173,7 @@ video.addEventListener('play', async () => {
         
         try {
             const voteid = sessionStorage.getItem("voteid");
+            
             const liveImageUrl = await captureAndUploadFace(video, voteid);
             await registerFinalDocument(voteid, liveImageUrl);
             
