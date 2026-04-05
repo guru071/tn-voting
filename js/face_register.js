@@ -6,6 +6,8 @@ const statusText = document.getElementById('status');
 const registerBtn = document.getElementById('registerBtn');
 const flipBtn = document.getElementById('flipBtn'); 
 const previewImg = document.getElementById('previewImg'); 
+const confirmBtn = document.getElementById('confirmBtn');
+const recaptureBtn = document.getElementById('recaptureBtn');
 
 const CLOUD_NAME = 'ddg6utnk9';
 const UPLOAD_PRESET = 'tn voting';
@@ -15,6 +17,7 @@ let isAutoCapturing = false;
 let currentStream = null;
 let currentFacingMode = "user";
 let faceDetectionInterval = null;
+let capturedBlob = null; 
 
 Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
@@ -56,7 +59,7 @@ video.addEventListener('play', () => {
     faceDetectionInterval = setInterval(async () => {
         if (video.style.display === 'none' || video.paused || video.ended) return; 
 
-        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 }))
             .withFaceLandmarks()
             .withFaceDescriptor();
 
@@ -105,8 +108,7 @@ video.addEventListener('play', () => {
 
                 setTimeout(() => {
                     if (latestDescriptor && isAutoCapturing) {
-                        registerBtn.disabled = false;
-                        registerBtn.click();
+                        handleCapture(); 
                     }
                 }, 1000);
 
@@ -122,8 +124,58 @@ video.addEventListener('play', () => {
             registerBtn.disabled = true;
             isAutoCapturing = false;
         }
-    }, 500);
+    }, 150); 
 });
+
+function handleCapture() {
+    if (!latestDescriptor) return;
+
+    isAutoCapturing = false; 
+    clearInterval(faceDetectionInterval); 
+    
+    statusText.innerText = "Review your photo. Looks good?";
+    statusText.className = "success";
+
+    registerBtn.style.display = 'none';
+    if(confirmBtn) confirmBtn.style.display = 'inline-block';
+    if(recaptureBtn) recaptureBtn.style.display = 'inline-block';
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = video.videoWidth;
+    tempCanvas.height = video.videoHeight;
+    tempCanvas.getContext('2d').drawImage(video, 0, 0);
+    
+    video.style.display = 'none';
+    if(previewImg) {
+        previewImg.src = tempCanvas.toDataURL('image/jpeg');
+        previewImg.style.display = 'block';
+    }
+
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+    }
+
+    tempCanvas.toBlob(blob => {
+        capturedBlob = blob;
+    }, 'image/jpeg');
+}
+
+registerBtn.addEventListener('click', handleCapture);
+
+if (recaptureBtn) {
+    recaptureBtn.addEventListener('click', () => {
+        recaptureBtn.style.display = 'none';
+        confirmBtn.style.display = 'none';
+        registerBtn.style.display = 'inline-block';
+        registerBtn.disabled = true;
+        
+        capturedBlob = null;
+        statusText.innerText = "Restarting camera...";
+        statusText.className = "warning";
+
+        startVideo();
+    });
+}
 
 async function uploadToCloudinary(imageBlob, voteId) {
     return new Promise((resolve, reject) => {
@@ -143,76 +195,62 @@ async function uploadToCloudinary(imageBlob, voteId) {
     });
 }
 
-registerBtn.addEventListener('click', async () => {
-    if (!latestDescriptor) return;
+if (confirmBtn) {
+    confirmBtn.addEventListener('click', async () => {
+        if (!capturedBlob || !latestDescriptor) return;
 
-    registerBtn.disabled = true;
-    isAutoCapturing = false; 
-    clearInterval(faceDetectionInterval); 
-    
-    statusText.innerText = "Capturing photo & Saving...";
-    statusText.className = "warning";
-
-    try {
-        const voteId = sessionStorage.getItem("voteid"); 
+        confirmBtn.disabled = true;
+        recaptureBtn.disabled = true;
         
-        if (!voteId) {
-            statusText.innerText = "No Vote ID found. Please register first.";
+        statusText.innerText = "Saving to Database...";
+        statusText.className = "warning";
+
+        try {
+            const voteId = sessionStorage.getItem("voteid"); 
+            
+            if (!voteId) {
+                statusText.innerText = "No Vote ID found. Please register first.";
+                statusText.className = "error";
+                confirmBtn.disabled = false;
+                recaptureBtn.disabled = false;
+                return;
+            }
+
+            const imageUrl = await uploadToCloudinary(capturedBlob, voteId);
+            const faceDataArray = Array.from(latestDescriptor);
+
+            await setDoc(doc(db, "facelock", voteId), {
+                faceDescriptor: faceDataArray,
+                registeredAt: new Date()
+            });
+            
+            await setDoc(doc(db, "voting", voteId), {
+                name: sessionStorage.getItem("name"),
+                aadhar: Number(sessionStorage.getItem("aadhar")),
+                birth: Timestamp.fromDate(new Date(sessionStorage.getItem("birth"))),
+                gender: sessionStorage.getItem("gender"),
+                isvoted: false,
+                ph_no: Number(sessionStorage.getItem("phonenumber")),
+                vote_id: sessionStorage.getItem("voteid"),
+                gmail: sessionStorage.getItem("gmail"),
+                address: sessionStorage.getItem("address"),
+                faceImageUrl: imageUrl 
+            });
+
+            statusText.innerText = "Face Registered! Redirecting...";
+            statusText.className = "success";
+
+            setTimeout(() => {
+                sessionStorage.clear();
+                window.location.href = "form.html"; 
+            }, 1500);
+
+        } catch (error) {
+            console.error("Error writing document: ", error);
+            statusText.innerText = "Database Error. Refresh & Try Again.";
             statusText.className = "error";
-            registerBtn.disabled = false;
-            return;
+            confirmBtn.disabled = false;
+            recaptureBtn.disabled = false;
         }
-
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = video.videoWidth;
-        tempCanvas.height = video.videoHeight;
-        tempCanvas.getContext('2d').drawImage(video, 0, 0);
-        
-        video.style.display = 'none';
-        if(previewImg) {
-            previewImg.src = tempCanvas.toDataURL('image/jpeg');
-            previewImg.style.display = 'block';
-        }
-
-        if (currentStream) {
-            currentStream.getTracks().forEach(track => track.stop());
-        }
-
-        const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/jpeg'));
-
-        const imageUrl = await uploadToCloudinary(blob, voteId);
-        const faceDataArray = Array.from(latestDescriptor);
-
-        await setDoc(doc(db, "facelock", voteId), {
-            faceDescriptor: faceDataArray,
-            registeredAt: new Date()
-        });
-        
-        await setDoc(doc(db, "voting", voteId), {
-            name: sessionStorage.getItem("name"),
-            aadhar: Number(sessionStorage.getItem("aadhar")),
-            birth: Timestamp.fromDate(new Date(sessionStorage.getItem("birth"))),
-            gender: sessionStorage.getItem("gender"),
-            isvoted: false,
-            ph_no: Number(sessionStorage.getItem("phonenumber")),
-            vote_id: sessionStorage.getItem("voteid"),
-            gmail: sessionStorage.getItem("gmail"),
-            address: sessionStorage.getItem("address"),
-            faceImageUrl: imageUrl 
-        });
-
-        statusText.innerText = "Face Registered! Redirecting...";
-        statusText.className = "success";
-
-        setTimeout(() => {
-            sessionStorage.clear();
-            window.location.href = "form.html"; 
-        }, 1500);
-
-    } catch (error) {
-        console.error("Error writing document: ", error);
-        statusText.innerText = "Database Error. Refresh & Try Again.";
-        statusText.className = "error";
-        registerBtn.disabled = false;
-    }
-});
+    });
+}
