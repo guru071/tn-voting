@@ -12,11 +12,11 @@ let unlocked = false;
 let savedDescriptor = null;
 
 window.onload = async function () {
-  const vote_found = sessionStorage.getItem("vote_found");
+  const vote_found = sessionStorage.getItem("info_entered");
   if (vote_found !== "true") {
     alert("Unauthorized access");
     isNavigating = true;
-    window.location.href = "voting.html";
+    window.location.href = "form.html";
     return;
   }
 };
