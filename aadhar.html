@@ -1,61 +1,36 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-  
-  <title>TN VOTING</title>
-  <link rel="stylesheet" href="./css/interface.css">
-
-  <script type="module" src="./js/aadhar_backend.js" ></script>
-    <style>
-      p {
-
-      font-size: 20px;
-      font-weight: bold;
-      color: rgba(255, 255, 255);
-
-    }
-@import url('https://fonts.googleapis.com/css2?family=Kavivanar&display=swap');
-h2{
-  padding-bottom: 15px;
-}
-</style>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TN VOTING - Identity Verification</title>
+    <link rel="stylesheet" href="./css/interface.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+          
+            emailjs.init("uexBJl7IgsSYl3Pqt");
+        })();
+    </script>
+    <script type="module" src="./js/aadhar_backend.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-
-<body class="aadhar-page">
-  <center>
-      <p>MAGH'S</p>
-    <div class="card">
-      <table>
-        <tr>
-          <td class="s">Aadhaar</td>
-        </tr>
-        <tr>
-          <td>
-            <input class="aadhar" type="text" id="aadharno" placeholder="Enter Aadhaar" autofocus>
-          </td>
-        </tr>
-      </table>
-
-      <!-- OTP SECTION -->
-      <h4>Otp</h4>
-      <div class="inputs">
-        <input class="otp" type="tel"  maxlength="1" >
-        <input class="otp" type="tel"  maxlength="1">
-        <input class="otp" type="tel" maxlength="1">
-        <input class="otp" type="tel"  maxlength="1">
-        <input class="otp" type="tel"  maxlength="1">
-      </div>
-
-
-      <button class="nextbtn">Next</button>
-    </div>
-      <video autoplay muted loop>
-    <source src="./assests/video/video3.mp4" type="video/mp4">
-</video>
-  </center>
-
+<body>
+    <center>
+        <p>SECURE VOTING INTERFACE</p>
+        <div class="card">
+            <h3 style="color: white; margin-top: 0;">Identity Verification</h3>
+            <input class="aadhar" type="text" id="aadharno" placeholder="12 Digit Aadhaar Number" maxlength="12" autofocus>
+            <div class="inputs" id="otpFields" style="display: none;">
+                <input class="otp" type="tel" maxlength="1">
+                <input class="otp" type="tel" maxlength="1">
+                <input class="otp" type="tel" maxlength="1">
+                <input class="otp" type="tel" maxlength="1">
+                <input class="otp" type="tel" maxlength="1">
+            </div>
+            <div id="timer"></div>
+            <button class="nextbtn" id="mainBtn">Send OTP</button>
+            <button id="resendBtn">Resend Code</button>
+        </div>
+        <video autoplay muted loop><source src="./assests/video/video3.mp4" type="video/mp4"></video>
+    </center>
 </body>
-
 </html>

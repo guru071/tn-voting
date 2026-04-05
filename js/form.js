@@ -1,19 +1,18 @@
+// form.js
 import { db } from "./firebase.js";
 import {
     doc,
     getDoc,
-    setDoc,
     collection,
     query,
     where,
-    getDocs,
-    Timestamp
+    getDocs
 } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
 
 const message = document.getElementById("message");
+const submitBtn = document.getElementById("submitBtn");
 
 async function insertdata() {
-
     const name = document.getElementById("name").value.trim();
     const aadhar = document.getElementById("aadhar").value.trim().replaceAll(" ", "");
     const birth = document.getElementById("birth").value;
@@ -27,6 +26,7 @@ async function insertdata() {
         const regex = /^[a-zA-Z]{3}\d+$/;
         return regex.test(voteId);
     }
+
     if (!name || !aadhar || !birth || !ph_no || !vote_id || !gmail || !gender || !address) {
         message.innerHTML = "<span class='error'>All fields are required!</span>";
         return;
@@ -50,7 +50,6 @@ async function insertdata() {
     
     const today = new Date();
     const birthDate = new Date(birth);
-
     let age = today.getFullYear() - birthDate.getFullYear();
     const month = today.getMonth() - birthDate.getMonth();
 
@@ -64,24 +63,24 @@ async function insertdata() {
     }
 
     try {
+        submitBtn.disabled = true;
+        message.innerHTML = "<span class='success'>Verifying...</span>";
 
         const docRef = doc(db, "voting", vote_id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
             message.innerHTML = "<span class='error'>Vote ID already registered!</span>";
+            submitBtn.disabled = false;
             return;
         }
 
-        const q = query(
-            collection(db, "voting"),
-            where("aadhar", "==", aadhar)
-        );
-
+        const q = query(collection(db, "voting"), where("aadhar", "==", aadhar));
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
             message.innerHTML = "<span class='error'>Aadhar already registered!</span>";
+            submitBtn.disabled = false;
             return;
         }
 
@@ -93,22 +92,14 @@ async function insertdata() {
         sessionStorage.setItem("gmail", gmail);
         sessionStorage.setItem("gender", gender);
         sessionStorage.setItem("address", address);
-
-        message.innerHTML = "<span class='success'>Registration Successful!</span>";
-
-        document.getElementById("name").value = "";
-        document.getElementById("aadhar").value = "";
-        document.getElementById("birth").value = "";
-        document.getElementById("phonenumber").value = "";
-        document.getElementById("voteid").value = "";
-        document.getElementById("gmail").value = "";
-        document.getElementById("gender").value = "";
-        document.getElementById("address").value = "";
         sessionStorage.setItem("info_entered", "true");
+
+        message.innerHTML = "<span class='success'>Registration Details Saved! Redirecting...</span>";
         window.location.href = "face_register.html";
         
     } catch (error) {
         message.innerHTML = "<span class='error'>" + error.message + "</span>";
+        submitBtn.disabled = false;
     }
 }
 

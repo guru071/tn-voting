@@ -1,41 +1,61 @@
 import { db } from "./firebase.js";
-import {
-    doc, getDoc
-} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
-async function loadInfo() {
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+async function loadVoterProfile() {
     const voteid = sessionStorage.getItem("voteid");
-    const docRef = doc(db, "voting", voteid);
-    const docSnap = await getDoc(docRef);
+    
+    if (!voteid) {
+        window.location.href = "voting.html";
+        return;
+    }
 
-    if (docSnap.exists()) {
-        const name = await docSnap.data().name;
-        const dob = await docSnap.data().birth.toDate();
-        const aadhar = docSnap.data().aadhar;
-        const vote_id = docSnap.data().vote_id;
-        const gender = docSnap.data().gender;
-        const contact = docSnap.data().ph_no;
-        const address = docSnap.data().address;
+    try {
+        const docRef = doc(db, "voting", voteid);
+        const docSnap = await getDoc(docRef);
 
-        document.getElementById("name").textContent = name;
-        document.getElementById("dob").textContent = dob.toDateString();
-        document.getElementById("aadhar").textContent = aadhar;
-        document.getElementById("voteid").textContent = vote_id;
-        document.getElementById("gender").textContent = gender;
-        document.getElementById("contact").textContent = contact;
-        document.getElementById("address").textContent = address;
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+
+            document.getElementById("name").textContent = data.name || "---";
+            document.getElementById("voteid").textContent = voteid;
+            document.getElementById("aadhar").textContent = data.aadhar || "---";
+            document.getElementById("gender").textContent = data.gender || "---";
+            document.getElementById("contact").textContent = data.ph_no || "---";
+            document.getElementById("address").textContent = data.address || "---";
+
+            if (data.birth && typeof data.birth.toDate === 'function') {
+                const dateObj = data.birth.toDate();
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                document.getElementById("dob").textContent = dateObj.toLocaleDateString('en-IN', options);
+            } else {
+                document.getElementById("dob").textContent = data.birth || "---";
+            }
+
+            const profileImg = document.getElementById("profileImage");
+            if (data.faceImageUrl && data.faceImageUrl !== "none") {
+                profileImg.src = data.faceImageUrl;
+            } else {
+                profileImg.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+            }
+
+        } else {
+            alert("No profile found");
+            window.location.href = "voting.html";
+        }
+    } catch (error) {
+        console.error(error);
     }
 }
 
 window.onload = function () {
-
     const vote_found = sessionStorage.getItem("vote_found");
-    const isvoted = sessionStorage.getItem("isvoted");
     const aadhar_found = sessionStorage.getItem("aadhar_found");
 
-    if (vote_found !== "true" && isvoted !== "true" && aadhar_found !== "true" && docSnap.data().isvoted !== true) {
+    if (vote_found !== "true" || aadhar_found !== "true") {
         alert("Unauthorized access");
         window.location.href = "voting.html";
+        return;
     }
 
-}
-loadInfo();
+    loadVoterProfile();
+};

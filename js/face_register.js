@@ -1,156 +1,184 @@
-import { db } from "./firebase.js"; 
-import { doc, setDoc, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-window.onload = function () {
-    const infoEntered = sessionStorage.getItem("info_entered");
-    if (infoEntered !== "true") {
-        alert("Please fill the form first!");
-        window.location.href = "form.html";
-    }
-}
+import { db } from "./firebase.js";
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const CLOUD_NAME = 'ddg6utnk9';
+const UPLOAD_PRESET = 'tn voting';
+
+let isNavigating = false;
 const video = document.getElementById('video');
 const statusText = document.getElementById('status');
-const registerBtn = document.getElementById('registerBtn');
-let latestDescriptor = null; 
-let isAutoCapturing = false;
+let blinkDetected = false;
+let unlocked = false;
+let savedDescriptor = null;
+
+window.onload = async function () {
+  const vote_found = sessionStorage.getItem("vote_found");
+  if (vote_found !== "true") {
+    alert("Unauthorized access");
+    isNavigating = true;
+    window.location.href = "voting.html";
+    return;
+  }
+};
 
 Promise.all([
-    faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
-    faceapi.nets.faceLandmark68Net.loadFromUri('./models'),
-    faceapi.nets.faceRecognitionNet.loadFromUri('./models'),
-    faceapi.nets.ageGenderNet.loadFromUri('./models') 
-]).then(startVideo);
+  faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
+  faceapi.nets.faceLandmark68Net.loadFromUri('./models'),
+  faceapi.nets.faceRecognitionNet.loadFromUri('./models'),
+  faceapi.nets.ageGenderNet.loadFromUri('./models')
+]).then(fetchFaceFromDatabase);
 
-function startVideo() {
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-        .then(stream => {
-            video.srcObject = stream;
-            statusText.innerText = "Please look at the camera";
-        })
-        .catch(err => console.error(err));
+async function fetchFaceFromDatabase() {
+  statusText.innerText = "Connecting to Database...";
+  try {
+    const voteid = sessionStorage.getItem("voteid");
+    const docRef = doc(db, "facelock", voteid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const faceDataArray = docSnap.data().faceDescriptor;
+      savedDescriptor = new Float32Array(faceDataArray);
+      startVideo();
+    } else {
+      statusText.innerText = "No face registered in database!";
+      statusText.className = "error";
+    }
+  } catch (error) {
+    statusText.innerText = "Error connecting to database.";
+    statusText.className = "error";
+  }
 }
 
-video.addEventListener('play', () => {
-    const canvas = document.getElementById('canvas');
-    const displaySize = { width: video.width || 640, height: video.height || 480 };
-    faceapi.matchDimensions(canvas, displaySize);
+function startVideo() {
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+    .then(stream => { video.srcObject = stream; })
+    .catch(err => console.error(err));
+}
 
-    setInterval(async () => {
-        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+function getDistance(point1, point2) {
+  return Math.sqrt(Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
+}
 
-        if (detection) {
-            const resizedDetection = faceapi.resizeResults(detection, displaySize);
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            faceapi.draw.drawDetections(canvas, resizedDetection);
+function getEAR(eye) {
+  const vertical1 = getDistance(eye[1], eye[5]);
+  const vertical2 = getDistance(eye[2], eye[4]);
+  const horizontal = getDistance(eye[0], eye[3]);
+  return (vertical1 + vertical2) / (2.0 * horizontal);
+}
 
-            const { box } = detection.detection;
-            const landmarks = detection.landmarks;
+async function captureAndUploadFace(videoElement, voteId) {
+    return new Promise((resolve, reject) => {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = videoElement.videoWidth;
+        tempCanvas.height = videoElement.videoHeight;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.drawImage(videoElement, 0, 0, tempCanvas.width, tempCanvas.height);
 
-            const faceArea = box.width * box.height;
-            const videoArea = displaySize.width * displaySize.height;
-            
-            if ((faceArea / videoArea) < 0.15) {
-                statusText.innerText = "Move Closer";
-                statusText.className = "warning";
-                registerBtn.disabled = true;
-                isAutoCapturing = false;
-                return;
+        tempCanvas.toBlob(async (blob) => {
+            if (!blob) return reject("Failed to capture webcam frame.");
+
+            const customName = `${voteId}_live_capture`;
+            const formData = new FormData();
+            formData.append('file', blob, 'capture.jpg'); 
+            formData.append('upload_preset', UPLOAD_PRESET);
+            formData.append('public_id', customName);
+            formData.append('folder', 'voter_faces');
+
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.secure_url) {
+                    resolve(data.secure_url);
+                } else {
+                    reject(data.error.message || "Cloudinary upload failed.");
+                }
+            } catch (error) {
+                reject(error);
             }
+        }, 'image/jpeg', 0.9);
+    });
+}
 
-            const nose = landmarks.getNose()[3];
-            const leftJaw = landmarks.getJawOutline()[0];
-            const rightJaw = landmarks.getJawOutline()[16];
-            const turnRatio = (nose.x - leftJaw.x) / (rightJaw.x - nose.x);
+async function registerFinalDocument(voteId, imageUrl) {
+    const docRef = doc(db, "voting", voteId);
+    await updateDoc(docRef, {
+        faceImageUrl: imageUrl,
+        verifiedAt: new Date()
+    });
+}
 
-            if (turnRatio < 0.75 || turnRatio > 1.25) {
-                statusText.innerText = "Look Straight";
-                statusText.className = "warning";
-                registerBtn.disabled = true;
-                isAutoCapturing = false;
-                return;
-            }
+video.addEventListener('play', async () => {
+  if (!savedDescriptor) return; 
 
-            latestDescriptor = detection.descriptor; 
-            
-            const toggle = document.getElementById('autoCaptureToggle');
-            const autoCaptureOn = toggle ? toggle.checked : false;
+  const canvas = document.getElementById('canvas');
+  const displaySize = { width: video.width || 640, height: video.height || 480 };
+  faceapi.matchDimensions(canvas, displaySize);
 
-            if (autoCaptureOn && !isAutoCapturing) {
-                isAutoCapturing = true; 
-                statusText.innerText = "Hold still... Capturing in 1 second!";
-                statusText.className = "warning";
-                registerBtn.disabled = true;
+  const labeledFace = new faceapi.LabeledFaceDescriptors(
+    "Authorized User",
+    [savedDescriptor]
+  );
 
-                setTimeout(() => {
-                    if (latestDescriptor) {
-                        registerBtn.disabled = false;
-                        registerBtn.click();
-                    }
-                }, 1000);
+  const faceMatcher = new faceapi.FaceMatcher(labeledFace, 0.55);
+  statusText.innerText = "Please look and blink to unlock";
 
-            } else if (!autoCaptureOn) {
-                statusText.innerText = "Ready! Click Capture.";
-                statusText.className = "success";
-                registerBtn.disabled = false;
-                isAutoCapturing = false;
-            }
+  async function runDetection() {
+    if (unlocked) return;
 
-        } else {
-            statusText.innerText = "No face detected";
-            statusText.className = "error";
-            registerBtn.disabled = true;
-            isAutoCapturing = false;
-        }
-    }, 500);
-});
+    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+      .withFaceLandmarks()
+      .withFaceDescriptor()
+      .withAgeAndGender();
 
-registerBtn.addEventListener('click', async () => {
-    if (!latestDescriptor) return;
+    if (detection) {
+      const resizedDetection = faceapi.resizeResults(detection, displaySize);
+      canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+      faceapi.draw.drawDetections(canvas, resizedDetection);
 
-    registerBtn.disabled = true;
-    statusText.innerText = "Saving to Database...";
-    statusText.className = "warning";
+      const leftEye = detection.landmarks.getLeftEye();
+      const rightEye = detection.landmarks.getRightEye();
+      const avgEAR = (getEAR(leftEye) + getEAR(rightEye)) / 2;
 
-    try {
-        const faceDataArray = Array.from(latestDescriptor);
-        const voteId = sessionStorage.getItem("voteid"); 
-        
-        if (!voteId) {
-            statusText.innerText = "No Vote ID found. Please register first.";
-            statusText.className = "error";
-            registerBtn.disabled = false;
-            return;
-        }
-        
-        await setDoc(doc(db, "facelock", voteId), {
-            faceDescriptor: faceDataArray,
-            registeredAt: new Date()
-        });
-        
-        const docRef = doc(db, "voting", voteId);
-        
-        console.log(sessionStorage.getItem("name"), sessionStorage.getItem("aadhar"), sessionStorage.getItem("birth"), sessionStorage.getItem("gender"), sessionStorage.getItem("phonenumber"), sessionStorage.getItem("gmail"), sessionStorage.getItem("address"));
-        await setDoc(docRef, {
-            name: sessionStorage.getItem("name"),
-            aadhar: Number(sessionStorage.getItem("aadhar")),
-            birth: Timestamp.fromDate(new Date(sessionStorage.getItem("birth"))),
-            gender: sessionStorage.getItem("gender"),
-            isvoted: false,
-            ph_no: Number(sessionStorage.getItem("phonenumber")),
-            vote_id: sessionStorage.getItem("voteid"),
-            gmail: sessionStorage.getItem("gmail"),
-            address: sessionStorage.getItem("address")
-        });
+      if (avgEAR < 0.30) { blinkDetected = true; }
 
-        statusText.innerText = "Face Registered Successfully!";
-        statusText.className = "success";
+      const match = faceMatcher.findBestMatch(detection.descriptor);
 
-    } catch (error) {
-        console.error("Error writing document: ", error);
-        statusText.innerText = "Database Error. Try Again.";
+      if (match.label === "unknown") {
+        statusText.innerText = "Face not recognized.";
         statusText.className = "error";
-        registerBtn.disabled = false;
-        isAutoCapturing = false;
+      } else if (!blinkDetected) {
+        statusText.innerText = `Identity Confirmed. Please BLINK.`;
+        statusText.className = "warning";
+      } else {
+        unlocked = true;
+        statusText.innerText = `Unlocked! Processing Registration...`;
+        statusText.className = "success";
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        
+        try {
+            const voteid = sessionStorage.getItem("voteid");
+            const liveImageUrl = await captureAndUploadFace(video, voteid);
+            await registerFinalDocument(voteid, liveImageUrl);
+            
+            isNavigating = true;
+            window.location.href = "info.html";
+            
+        } catch (error) {
+            console.error(error);
+            statusText.innerText = "Process failed. Please try again.";
+            statusText.className = "error";
+            unlocked = false; 
+        }
+        return;
+      }
     }
+    
+    requestAnimationFrame(runDetection);
+  }
+
+  runDetection();
 });
