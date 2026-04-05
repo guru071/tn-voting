@@ -126,7 +126,6 @@ video.addEventListener('play', () => {
         }
     }, 150); 
 });
-
 function handleCapture() {
     if (!latestDescriptor) return;
 
@@ -140,26 +139,38 @@ function handleCapture() {
     if(confirmBtn) confirmBtn.style.display = 'inline-block';
     if(recaptureBtn) recaptureBtn.style.display = 'inline-block';
 
+    const width = video.videoWidth || video.clientWidth || 640;
+    const height = video.videoHeight || video.clientHeight || 480;
+
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = video.videoWidth;
-    tempCanvas.height = video.videoHeight;
-    tempCanvas.getContext('2d').drawImage(video, 0, 0);
+    tempCanvas.width = width;
+    tempCanvas.height = height;
     
-    video.style.display = 'none';
-    if(previewImg) {
-        previewImg.src = tempCanvas.toDataURL('image/jpeg');
-        previewImg.style.display = 'block';
+    const ctx = tempCanvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, width, height);
+    
+    const trackingCanvas = document.getElementById('canvas');
+    if (trackingCanvas) {
+        trackingCanvas.getContext('2d').clearRect(0, 0, trackingCanvas.width, trackingCanvas.height);
     }
 
-    if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
+    if(previewImg) {
+        previewImg.src = tempCanvas.toDataURL('image/jpeg', 1.0);
+        previewImg.style.display = 'block';
     }
+    
+    video.style.display = 'none';
+
+    setTimeout(() => {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+    }, 100);
 
     tempCanvas.toBlob(blob => {
         capturedBlob = blob;
-    }, 'image/jpeg');
+    }, 'image/jpeg', 0.9);
 }
-
 registerBtn.addEventListener('click', handleCapture);
 
 if (recaptureBtn) {
