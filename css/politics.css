@@ -35,8 +35,8 @@ animation: bgchange 30s ease infinite;
 }
 @keyframes bgchange {
   0%   { background-image: url("../assests/image/tn5.jpg"); }
-  25%  { background-image: url("../assests/image/mailam.png"); }
-  50%  { background-image: url("../assests/image/tnlogo.jpeg"); }
-  75%  { background-image: url("../assests/image/tn5.jpg"); }
-  100% { background-image: url("../assests/image/mailam.png"); }
+  25%  { background-image: url("../assests/image/tnlogo.jpeg"); }
+  50%  { background-image: url("../assests/image/tn5.jpeg"); }
+  75%  { background-image: url("../assests/image/tnlogo.jpeg"); }
+  100% { background-image: url("../assests/image/tn5.jpg"); }
 }
