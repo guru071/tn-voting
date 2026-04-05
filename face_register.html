@@ -6,34 +6,48 @@
     <title>Face Lock - Register</title>
     <link rel="stylesheet" href="./css/facelock.css">
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <style>
+        #flipBtn {
+            border-radius: 50px;
+            margin-bottom: 20px;
+        }
+        .controls {
+            margin-top: 15px;
+        }
+    </style>
 </head>
 
 <body>
 
     <h2>Register Face ID</h2>
+    
     <div class="toggle-container">
-        <button id="flipBtn"
-            style="margin: 0px; margin-bottom: 460px; margin-left: 0px; margin-right: 800px; left: 0; border-radius: 50px;">📷Flip
-            Camera</button>
+        <button id="flipBtn">📷 Flip Camera</button>
         <label class="switch">
             <input type="checkbox" id="autoCaptureToggle" checked>
             <span class="slider round"></span>
         </label>
         <span class="toggle-label">Auto-Capture Face</span>
     </div>
+
     <div class="container">
         <video id="video" autoplay muted playsinline></video>
         <img id="previewImg" style="display:none; width: 100%; max-width: 640px;" />
         <canvas id="canvas"></canvas>
+        
         <div id="status" class="warning">Loading AI Models...</div>
-        <button id="confirmBtn" style="display: none;">Confirm & Register</button>
-        <button id="recaptureBtn" style="display: none;">Retake Photo</button>
+        
+        <div class="controls">
+            <button id="registerBtn" disabled>Capture Photo</button> 
+            
+            <button id="recaptureBtn" style="display: none;">Retake Photo</button>
+            <button id="confirmBtn" style="display: none;">Confirm & Register</button>
+        </div>
     </div>
 
-    <div class="nav-links">
+    <div class="nav-links"></div>
 
-    </div>
-    <script type="module" src="./js/face_register.js"></script>
+    <script type="module" src="./js/face_regster.js"></script>
 </body>
 
 </html>
