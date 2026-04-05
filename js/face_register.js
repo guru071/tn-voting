@@ -4,12 +4,17 @@ import { doc, setDoc, getDoc, Timestamp } from "https://www.gstatic.com/firebase
 const video = document.getElementById('video');
 const statusText = document.getElementById('status');
 const registerBtn = document.getElementById('registerBtn');
+const flipBtn = document.getElementById('flipBtn'); 
+const previewImg = document.getElementById('previewImg'); 
 
 const CLOUD_NAME = 'ddg6utnk9';
 const UPLOAD_PRESET = 'tn voting';
 
 let latestDescriptor = null; 
 let isAutoCapturing = false;
+let currentStream = null;
+let currentFacingMode = "user";
+let faceDetectionInterval = null;
 
 Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
@@ -19,12 +24,26 @@ Promise.all([
 ]).then(startVideo);
 
 function startVideo() {
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } })
         .then(stream => {
+            currentStream = stream;
             video.srcObject = stream;
+            video.style.display = 'block';
+            if(previewImg) previewImg.style.display = 'none';
             statusText.innerText = "Please look at the camera";
         })
         .catch(err => console.error(err));
+}
+
+if (flipBtn) {
+    flipBtn.addEventListener('click', () => {
+        currentFacingMode = currentFacingMode === "user" ? "environment" : "user";
+        startVideo();
+    });
 }
 
 video.addEventListener('play', () => {
@@ -32,7 +51,11 @@ video.addEventListener('play', () => {
     const displaySize = { width: video.width || 640, height: video.height || 480 };
     faceapi.matchDimensions(canvas, displaySize);
 
-    setInterval(async () => {
+    if (faceDetectionInterval) clearInterval(faceDetectionInterval);
+
+    faceDetectionInterval = setInterval(async () => {
+        if (video.style.display === 'none' || video.paused || video.ended) return; 
+
         const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
             .withFaceLandmarks()
             .withFaceDescriptor();
@@ -48,7 +71,7 @@ video.addEventListener('play', () => {
             const faceArea = box.width * box.height;
             const videoArea = displaySize.width * displaySize.height;
             
-            if ((faceArea / videoArea) < 0.15) {
+            if ((faceArea / videoArea) < 0.08) {
                 statusText.innerText = "Move Closer";
                 statusText.className = "warning";
                 registerBtn.disabled = true;
@@ -61,7 +84,7 @@ video.addEventListener('play', () => {
             const rightJaw = landmarks.getJawOutline()[16];
             const turnRatio = (nose.x - leftJaw.x) / (rightJaw.x - nose.x);
 
-            if (turnRatio < 0.75 || turnRatio > 1.25) {
+            if (turnRatio < 0.6 || turnRatio > 1.4) {
                 statusText.innerText = "Look Straight";
                 statusText.className = "warning";
                 registerBtn.disabled = true;
@@ -76,22 +99,21 @@ video.addEventListener('play', () => {
 
             if (autoCaptureOn && !isAutoCapturing) {
                 isAutoCapturing = true; 
-                statusText.innerText = "Hold still... Capturing in 1 second!";
+                statusText.innerText = "Hold still... Capturing!";
                 statusText.className = "warning";
                 registerBtn.disabled = true;
 
                 setTimeout(() => {
-                    if (latestDescriptor) {
+                    if (latestDescriptor && isAutoCapturing) {
                         registerBtn.disabled = false;
                         registerBtn.click();
                     }
                 }, 1000);
 
-            } else if (!autoCaptureOn) {
+            } else if (!autoCaptureOn && !isAutoCapturing) {
                 statusText.innerText = "Ready! Click Capture.";
                 statusText.className = "success";
                 registerBtn.disabled = false;
-                isAutoCapturing = false;
             }
 
         } else {
@@ -103,33 +125,21 @@ video.addEventListener('play', () => {
     }, 500);
 });
 
-// Image Upload Logic added here
-async function uploadToCloudinary(videoElement, voteId) {
+async function uploadToCloudinary(imageBlob, voteId) {
     return new Promise((resolve, reject) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = videoElement.videoWidth;
-        canvas.height = videoElement.videoHeight;
-        canvas.getContext('2d').drawImage(videoElement, 0, 0);
-
-        canvas.toBlob(async (blob) => {
-            if (!blob) return reject("Capture failed");
-            const formData = new FormData();
-            formData.append('file', blob, 'face.jpg');
-            formData.append('upload_preset', UPLOAD_PRESET);
-            formData.append('public_id', `${voteId}_profile`);
-            formData.append('folder', 'vote_faces');
-            
-            try {
-                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await res.json();
-                resolve(data.secure_url);
-            } catch (err) {
-                reject(err);
-            }
-        }, 'image/jpeg');
+        const formData = new FormData();
+        formData.append('file', imageBlob, 'face.jpg');
+        formData.append('upload_preset', UPLOAD_PRESET);
+        formData.append('public_id', `${voteId}_profile`);
+        formData.append('folder', 'vote_faces');
+        
+        fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => resolve(data.secure_url))
+        .catch(err => reject(err));
     });
 }
 
@@ -137,11 +147,13 @@ registerBtn.addEventListener('click', async () => {
     if (!latestDescriptor) return;
 
     registerBtn.disabled = true;
-    statusText.innerText = "Saving to Database...";
+    isAutoCapturing = false; 
+    clearInterval(faceDetectionInterval); 
+    
+    statusText.innerText = "Capturing photo & Saving...";
     statusText.className = "warning";
 
     try {
-        const faceDataArray = Array.from(latestDescriptor);
         const voteId = sessionStorage.getItem("voteid"); 
         
         if (!voteId) {
@@ -150,17 +162,32 @@ registerBtn.addEventListener('click', async () => {
             registerBtn.disabled = false;
             return;
         }
-        
-        // 1. Upload to Cloudinary
-        const imageUrl = await uploadToCloudinary(video, voteId);
 
-        // 2. Save descriptor to facelock
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = video.videoWidth;
+        tempCanvas.height = video.videoHeight;
+        tempCanvas.getContext('2d').drawImage(video, 0, 0);
+        
+        video.style.display = 'none';
+        if(previewImg) {
+            previewImg.src = tempCanvas.toDataURL('image/jpeg');
+            previewImg.style.display = 'block';
+        }
+
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+
+        const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/jpeg'));
+
+        const imageUrl = await uploadToCloudinary(blob, voteId);
+        const faceDataArray = Array.from(latestDescriptor);
+
         await setDoc(doc(db, "facelock", voteId), {
             faceDescriptor: faceDataArray,
             registeredAt: new Date()
         });
         
-        // 3. Save to voting (including the image URL)
         await setDoc(doc(db, "voting", voteId), {
             name: sessionStorage.getItem("name"),
             aadhar: Number(sessionStorage.getItem("aadhar")),
@@ -174,14 +201,18 @@ registerBtn.addEventListener('click', async () => {
             faceImageUrl: imageUrl 
         });
 
-        statusText.innerText = "Face Registered Successfully!";
+        statusText.innerText = "Face Registered! Redirecting...";
         statusText.className = "success";
+
+        setTimeout(() => {
+            sessionStorage.clear();
+            window.location.href = "form.html"; 
+        }, 1500);
 
     } catch (error) {
         console.error("Error writing document: ", error);
-        statusText.innerText = "Database Error. Try Again.";
+        statusText.innerText = "Database Error. Refresh & Try Again.";
         statusText.className = "error";
         registerBtn.disabled = false;
-        isAutoCapturing = false;
     }
 });

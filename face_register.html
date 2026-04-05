@@ -16,10 +16,12 @@
         <input type="checkbox" id="autoCaptureToggle" checked>
         <span class="slider round"></span>
     </label>
+    <button id="flipBtn">Flip Camera</button>
     <span class="toggle-label">Auto-Capture Face</span>
 </div>
     <div class="container">
         <video id="video" autoplay muted playsinline></video>
+        <img id="previewImg" style="display:none; width: 100%; max-width: 640px;" />
         <canvas id="canvas"></canvas>
         <div id="status" class="warning">Loading AI Models...</div>
         <button id="registerBtn" disabled>Capture Face</button>
