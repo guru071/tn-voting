@@ -37,7 +37,7 @@ function startVideo() {
             if(previewImg) previewImg.style.display = 'none';
         })
         .catch(err => {
-            statusText.innerText = "Camera access denied or unavailable.";
+            statusText.innerText = "Camera access denied.";
             statusText.className = "error";
         });
 }
@@ -174,7 +174,7 @@ video.addEventListener('play', () => {
 async function finishRegistration() {
     clearInterval(faceDetectionInterval);
     statusText.innerText = "All angles captured! Saving to database...";
-    statusText.className = "success";
+    statusText.className = "warning";
 
     const voteId = sessionStorage.getItem("voteid"); 
     if (!voteId || !capturedBlob) {
@@ -197,15 +197,19 @@ async function finishRegistration() {
         if (!uploadRes.ok) throw new Error("Cloudinary image upload failed");
         
         const uploadData = await uploadRes.json();
-        const birthDateString = sessionStorage.getItem("birth");
-        const birthDate = birthDateString ? new Date(birthDateString) : new Date();
+        
+        let birthDate = new Date();
+        const birthString = sessionStorage.getItem("birth");
+        if (birthString && !isNaN(new Date(birthString).getTime())) {
+            birthDate = new Date(birthString);
+        }
 
         await setDoc(doc(db, "facelock", voteId), {
-            faceDescriptors: [
-                Array.from(capturedDescriptors.straight),
-                Array.from(capturedDescriptors.left),
-                Array.from(capturedDescriptors.right)
-            ],
+            faceDescriptors: {
+                straight: Array.from(capturedDescriptors.straight),
+                left: Array.from(capturedDescriptors.left),
+                right: Array.from(capturedDescriptors.right)
+            },
             registeredAt: new Date()
         });
         
@@ -227,15 +231,18 @@ async function finishRegistration() {
         }
 
         statusText.innerText = "Setup Complete! Redirecting...";
+        statusText.className = "success";
+        
         setTimeout(() => {
             sessionStorage.clear();
             window.location.href = "form.html"; 
         }, 1500);
 
     } catch (error) {
-        console.error(error);
-        statusText.innerText = "Error Storing: " + error.message;
-alert(error);
+        let exactError = error.message;
+        if (error.code) exactError += " (Code: " + error.code + ")";
+        
+        statusText.innerText = "FAILED: " + exactError;
         statusText.className = "error";
         
         capturePhase = 'right';
