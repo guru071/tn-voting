@@ -1,5 +1,5 @@
 import { db } from "./firebase.js"; 
-import { doc, setDoc, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { doc, setDoc, getDoc, getDocs, collection, Timestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 const video = document.getElementById('video');
 const statusText = document.getElementById('status');
@@ -126,6 +126,7 @@ video.addEventListener('play', () => {
         }
     }, 150); 
 });
+
 function handleCapture() {
     if (!latestDescriptor) return;
 
@@ -171,6 +172,7 @@ function handleCapture() {
         capturedBlob = blob;
     }, 'image/jpeg', 0.9);
 }
+
 registerBtn.addEventListener('click', handleCapture);
 
 if (recaptureBtn) {
@@ -213,9 +215,6 @@ if (confirmBtn) {
         confirmBtn.disabled = true;
         recaptureBtn.disabled = true;
         
-        statusText.innerText = "Saving to Database...";
-        statusText.className = "warning";
-
         try {
             const voteId = sessionStorage.getItem("voteid"); 
             
@@ -226,6 +225,38 @@ if (confirmBtn) {
                 recaptureBtn.disabled = false;
                 return;
             }
+
+            // --- NEW: Check if face is already registered ---
+            statusText.innerText = "Checking for duplicates...";
+            statusText.className = "warning";
+            
+            const facelockRef = collection(db, "facelock");
+            const snapshot = await getDocs(facelockRef);
+            let isDuplicate = false;
+
+            for (const docSnap of snapshot.docs) {
+                const data = docSnap.data();
+                if (data.faceDescriptor) {
+                    const savedDescriptor = new Float32Array(data.faceDescriptor);
+                    // Calculate similarity distance. 0.55 is the standard threshold for face-api
+                    const distance = faceapi.euclideanDistance(latestDescriptor, savedDescriptor);
+                    if (distance < 0.55) {
+                        isDuplicate = true;
+                        break;
+                    }
+                }
+            }
+
+            if (isDuplicate) {
+                statusText.innerText = "This face is already registered to an account!";
+                statusText.className = "error";
+                confirmBtn.disabled = false;
+                recaptureBtn.disabled = false;
+                return; // Abort registration
+            }
+            // ----------------------------------------------
+
+            statusText.innerText = "Uploading data...";
 
             const imageUrl = await uploadToCloudinary(capturedBlob, voteId);
             const faceDataArray = Array.from(latestDescriptor);
