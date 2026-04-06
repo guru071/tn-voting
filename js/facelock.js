@@ -35,8 +35,14 @@ async function fetchFaceFromDatabase() {
     const docSnap = await getDoc(doc(db, "facelock", voteid));
 
     if (docSnap.exists() && docSnap.data().faceDescriptors) {
-      const descriptorArrays = docSnap.data().faceDescriptors;
-      savedDescriptors = descriptorArrays.map(arr => new Float32Array(arr));
+      const dbFaces = docSnap.data().faceDescriptors;
+      
+      savedDescriptors = [
+          new Float32Array(dbFaces.straight),
+          new Float32Array(dbFaces.left),
+          new Float32Array(dbFaces.right)
+      ];
+      
       startVideo();
     } else {
       statusText.innerText = "No secure profile found!";
