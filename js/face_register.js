@@ -235,6 +235,7 @@ async function finishRegistration() {
     } catch (error) {
         console.error(error);
         statusText.innerText = "Error Storing: " + error.message;
+alert(error);
         statusText.className = "error";
         
         capturePhase = 'right';
