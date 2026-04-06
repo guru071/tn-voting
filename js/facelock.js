@@ -10,74 +10,40 @@ window.onload = async function () {
   const voteid = sessionStorage.getItem("voteid");
 
   if (vote_found !== "true" && isvoted !== "true" && aadhar_found !== "true") {
-    alert("Unauthorized access");
     isNavigating = true;
     window.location.href = "voting.html";
     return;
-  }
-
-  if (voteid) {
-    const docRef = doc(db, "voting", voteid);
-    
-    window.addEventListener("offline", async () => {
-      await updateDoc(docRef, { access: false });
-    });
-
-    window.addEventListener("online", async () => {
-      const currentSnap = await getDoc(docRef);
-      if (currentSnap.exists() && currentSnap.data().access !== true) {
-        await updateDoc(docRef, { access: true });
-      }
-    });
-
-    window.addEventListener("beforeunload", () => {
-      if (!isNavigating) {
-        navigator.sendBeacon("/log", "user_leaving"); 
-        updateDoc(docRef, { access: false });
-      }
-    });
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden' && !isNavigating) {
-        navigator.sendBeacon('/api/exit-endpoint', "hidden");
-        updateDoc(docRef, { access: false });
-      }
-    });
   }
 };
 
 const video = document.getElementById('video');
 const statusText = document.getElementById('status');
-let blinkDetected = false;
-let unlocked = false;
-let savedDescriptor = null;
-let isVerifyingLiveness = false;
+let savedDescriptors = [];
+let authPhase = 'left'; 
 
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
   faceapi.nets.faceLandmark68Net.loadFromUri('./models'),
-  faceapi.nets.faceRecognitionNet.loadFromUri('./models'),
-  faceapi.nets.ageGenderNet.loadFromUri('./models')
+  faceapi.nets.faceRecognitionNet.loadFromUri('./models')
 ]).then(fetchFaceFromDatabase);
 
 async function fetchFaceFromDatabase() {
-  statusText.innerText = "Connecting to Database...";
+  statusText.innerText = "Loading Security Profile...";
   try {
     const voteid = sessionStorage.getItem("voteid");
-    const docRef = doc(db, "facelock", voteid);
-    const docSnap = await getDoc(docRef);
+    const docSnap = await getDoc(doc(db, "facelock", voteid));
 
-    if (docSnap.exists()) {
-      const faceDataArray = docSnap.data().faceDescriptor;
-      savedDescriptor = new Float32Array(faceDataArray);
+    if (docSnap.exists() && docSnap.data().faceDescriptors) {
+      const descriptorArrays = docSnap.data().faceDescriptors;
+      savedDescriptors = descriptorArrays.map(arr => new Float32Array(arr));
       startVideo();
     } else {
-      statusText.innerText = "No face registered in database!";
+      statusText.innerText = "No secure profile found!";
       statusText.className = "error";
     }
   } catch (error) {
     console.error(error);
-    statusText.innerText = "Error connecting to database.";
+    statusText.innerText = "Database connection error.";
     statusText.className = "error";
   }
 }
@@ -88,106 +54,75 @@ function startVideo() {
     .catch(err => console.error(err));
 }
 
-function getDistance(point1, point2) {
-  return Math.sqrt(Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
-}
-
-function getEAR(eye) {
-  const vertical1 = getDistance(eye[1], eye[5]);
-  const vertical2 = getDistance(eye[2], eye[4]);
-  const horizontal = getDistance(eye[0], eye[3]);
-  return (vertical1 + vertical2) / (2.0 * horizontal);
-}
-
-async function verifyDeepFeaturesAndLiveness(videoElement) {
-    const canvas = document.createElement('canvas');
-    canvas.width = videoElement.videoWidth;
-    canvas.height = videoElement.videoHeight;
-    canvas.getContext('2d').drawImage(videoElement, 0, 0);
-    const frameData = canvas.toDataURL('image/jpeg');
-
-    try {
-        const response = await fetch('/api/verify-liveness', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: frameData })
-        });
-        
-        if (!response.ok) return false;
-        
-        const result = await response.json();
-        return result.isLive && result.spoofScore < 0.1;
-    } catch (e) {
-        console.error(e);
-        return false;
-    }
+function getHeadTurn(landmarks) {
+    const nose = landmarks.getNose()[3];
+    const leftJaw = landmarks.getJawOutline()[0];
+    const rightJaw = landmarks.getJawOutline()[16];
+    return (nose.x - leftJaw.x) / (rightJaw.x - nose.x);
 }
 
 video.addEventListener('play', async () => {
-  if (!savedDescriptor) return; 
+  if (savedDescriptors.length === 0) return; 
 
   const canvas = document.getElementById('canvas');
   const displaySize = { width: video.width || 640, height: video.height || 480 };
   faceapi.matchDimensions(canvas, displaySize);
 
-  const labeledFace = new faceapi.LabeledFaceDescriptors(
-    "Authorized User",
-    [savedDescriptor]
-  );
-
-  const faceMatcher = new faceapi.FaceMatcher(labeledFace, 0.55);
-  statusText.innerText = "Please look and blink to unlock";
+  const faceMatcher = new faceapi.FaceMatcher([
+      new faceapi.LabeledFaceDescriptors("Authorized User", savedDescriptors)
+  ], 0.52); 
 
   async function runDetection() {
-    if (unlocked) return;
+    if (isNavigating) return;
 
     const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks()
-      .withFaceDescriptor()
-      .withAgeAndGender();
+      .withFaceDescriptor();
 
-    if (detection && !isVerifyingLiveness) {
+    if (detection) {
       const resizedDetection = faceapi.resizeResults(detection, displaySize);
       canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
       faceapi.draw.drawDetections(canvas, resizedDetection);
-
-      const leftEye = detection.landmarks.getLeftEye();
-      const rightEye = detection.landmarks.getRightEye();
-      const avgEAR = (getEAR(leftEye) + getEAR(rightEye)) / 2;
-
-      if (avgEAR < 0.30) { blinkDetected = true; }
 
       const match = faceMatcher.findBestMatch(detection.descriptor);
 
       if (match.label === "unknown") {
         statusText.innerText = "Face not recognized.";
         statusText.className = "error";
-      } else if (!blinkDetected) {
-        statusText.innerText = `Identity Confirmed. Please BLINK.`;
-        statusText.className = "warning";
       } else {
-        isVerifyingLiveness = true;
-        statusText.innerText = `Checking Anti-Spoofing & Liveness...`;
-        statusText.className = "warning";
+        const turnRatio = getHeadTurn(detection.landmarks);
 
-        const isGenuine = await verifyDeepFeaturesAndLiveness(video);
-
-        if (isGenuine) {
-            unlocked = true;
-            statusText.innerText = `Unlocked! (Est. Age: ${Math.round(detection.age)})`;
+        if (authPhase === 'left') {
+            statusText.innerText = "Identity Confirmed. Turn head LEFT to verify liveness.";
+            statusText.className = "warning";
+            if (turnRatio > 1.6) {
+                authPhase = 'right';
+            }
+        } 
+        else if (authPhase === 'right') {
+            statusText.innerText = "Good. Now turn head RIGHT.";
+            statusText.className = "warning";
+            if (turnRatio < 0.5) {
+                authPhase = 'unlocked';
+            }
+        }
+        else if (authPhase === 'unlocked') {
+            statusText.innerText = "Liveness Verified! Unlocking...";
             statusText.className = "success";
             canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
             
             isNavigating = true;
-            window.location.href = "info.html";
+            setTimeout(() => {
+                window.location.href = "info.html";
+            }, 800);
             return;
-        } else {
-            statusText.innerText = `Spoofing Detected. Access Denied.`;
-            statusText.className = "error";
-            blinkDetected = false;
-            isVerifyingLiveness = false;
         }
       }
+    } else {
+        if (authPhase !== 'unlocked') {
+            statusText.innerText = "Position your face in the frame";
+            statusText.className = "warning";
+        }
     }
     
     requestAnimationFrame(runDetection);
