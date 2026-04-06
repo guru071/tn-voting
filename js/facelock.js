@@ -51,6 +51,7 @@ const statusText = document.getElementById('status');
 let blinkDetected = false;
 let unlocked = false;
 let savedDescriptor = null;
+let isVerifyingLiveness = false;
 
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
@@ -98,6 +99,30 @@ function getEAR(eye) {
   return (vertical1 + vertical2) / (2.0 * horizontal);
 }
 
+async function verifyDeepFeaturesAndLiveness(videoElement) {
+    const canvas = document.createElement('canvas');
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+    canvas.getContext('2d').drawImage(videoElement, 0, 0);
+    const frameData = canvas.toDataURL('image/jpeg');
+
+    try {
+        const response = await fetch('/api/verify-liveness', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: frameData })
+        });
+        
+        if (!response.ok) return false;
+        
+        const result = await response.json();
+        return result.isLive && result.spoofScore < 0.1;
+    } catch (e) {
+        console.error(e);
+        return false;
+    }
+}
+
 video.addEventListener('play', async () => {
   if (!savedDescriptor) return; 
 
@@ -121,7 +146,7 @@ video.addEventListener('play', async () => {
       .withFaceDescriptor()
       .withAgeAndGender();
 
-    if (detection) {
+    if (detection && !isVerifyingLiveness) {
       const resizedDetection = faceapi.resizeResults(detection, displaySize);
       canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
       faceapi.draw.drawDetections(canvas, resizedDetection);
@@ -141,14 +166,27 @@ video.addEventListener('play', async () => {
         statusText.innerText = `Identity Confirmed. Please BLINK.`;
         statusText.className = "warning";
       } else {
-        unlocked = true;
-        statusText.innerText = `Unlocked! (Est. Age: ${Math.round(detection.age)})`;
-        statusText.className = "success";
-        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-        
-        isNavigating = true;
-        window.location.href = "info.html";
-        return;
+        isVerifyingLiveness = true;
+        statusText.innerText = `Checking Anti-Spoofing & Liveness...`;
+        statusText.className = "warning";
+
+        const isGenuine = await verifyDeepFeaturesAndLiveness(video);
+
+        if (isGenuine) {
+            unlocked = true;
+            statusText.innerText = `Unlocked! (Est. Age: ${Math.round(detection.age)})`;
+            statusText.className = "success";
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            
+            isNavigating = true;
+            window.location.href = "info.html";
+            return;
+        } else {
+            statusText.innerText = `Spoofing Detected. Access Denied.`;
+            statusText.className = "error";
+            blinkDetected = false;
+            isVerifyingLiveness = false;
+        }
       }
     }
     
