@@ -19,7 +19,8 @@ window.onload = async function () {
 const video = document.getElementById('video');
 const statusText = document.getElementById('status');
 let savedDescriptors = [];
-let authPhase = 'left'; 
+let authPhase = 'straight';
+let holdTimer = 0;
 
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
@@ -42,7 +43,6 @@ async function fetchFaceFromDatabase() {
       statusText.className = "error";
     }
   } catch (error) {
-    console.error(error);
     statusText.innerText = "Database connection error.";
     statusText.className = "error";
   }
@@ -51,7 +51,10 @@ async function fetchFaceFromDatabase() {
 function startVideo() {
   navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
     .then(stream => { video.srcObject = stream; })
-    .catch(err => console.error(err));
+    .catch(err => {
+        statusText.innerText = "Camera access denied.";
+        statusText.className = "error";
+    });
 }
 
 function getHeadTurn(landmarks) {
@@ -69,13 +72,13 @@ video.addEventListener('play', async () => {
   faceapi.matchDimensions(canvas, displaySize);
 
   const faceMatcher = new faceapi.FaceMatcher([
-      new faceapi.LabeledFaceDescriptors("Authorized User", savedDescriptors)
-  ], 0.52); 
+      new faceapi.LabeledFaceDescriptors("Authorized", savedDescriptors)
+  ], 0.55); 
 
   async function runDetection() {
     if (isNavigating) return;
 
-    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 }))
       .withFaceLandmarks()
       .withFaceDescriptor();
 
@@ -89,22 +92,41 @@ video.addEventListener('play', async () => {
       if (match.label === "unknown") {
         statusText.innerText = "Face not recognized.";
         statusText.className = "error";
+        holdTimer = 0;
       } else {
         const turnRatio = getHeadTurn(detection.landmarks);
 
-        if (authPhase === 'left') {
-            statusText.innerText = "Identity Confirmed. Turn head LEFT to verify liveness.";
+        if (authPhase === 'straight') {
+            statusText.innerText = "Identity Confirmed. Look STRAIGHT.";
+            statusText.className = "warning";
+            if (turnRatio >= 0.8 && turnRatio <= 1.2) {
+                holdTimer++;
+                if (holdTimer > 4) {
+                    authPhase = 'left';
+                    holdTimer = 0;
+                }
+            } else { holdTimer = 0; }
+        }
+        else if (authPhase === 'left') {
+            statusText.innerText = "Now turn head LEFT to verify liveness.";
             statusText.className = "warning";
             if (turnRatio > 1.6) {
-                authPhase = 'right';
-            }
+                holdTimer++;
+                if (holdTimer > 4) {
+                    authPhase = 'right';
+                    holdTimer = 0;
+                }
+            } else { holdTimer = 0; }
         } 
         else if (authPhase === 'right') {
             statusText.innerText = "Good. Now turn head RIGHT.";
             statusText.className = "warning";
             if (turnRatio < 0.5) {
-                authPhase = 'unlocked';
-            }
+                holdTimer++;
+                if (holdTimer > 4) {
+                    authPhase = 'unlocked';
+                }
+            } else { holdTimer = 0; }
         }
         else if (authPhase === 'unlocked') {
             statusText.innerText = "Liveness Verified! Unlocking...";
@@ -122,6 +144,7 @@ video.addEventListener('play', async () => {
         if (authPhase !== 'unlocked') {
             statusText.innerText = "Position your face in the frame";
             statusText.className = "warning";
+            holdTimer = 0;
         }
     }
     
