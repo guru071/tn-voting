@@ -1,10 +1,9 @@
-import { db } from "./firebase.js";
+import { db } from "./firebase.js"; 
 import { doc, setDoc, Timestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 const video = document.getElementById('video');
 const statusText = document.getElementById('status');
-const previewImg = document.getElementById('previewImg');
-const flipBtn = document.getElementById('flipBtn');
+const previewImg = document.getElementById('previewImg'); 
 const confirmBtn = document.getElementById('confirmBtn');
 const recaptureBtn = document.getElementById('recaptureBtn');
 
@@ -13,10 +12,10 @@ const UPLOAD_PRESET = 'tn voting';
 
 let currentStream = null;
 let faceDetectionInterval = null;
-let capturedBlob = null;
+let capturedBlob = null; 
 
 const capturedDescriptors = { straight: null, left: null, right: null };
-let capturePhase = 'profile';
+let capturePhase = 'profile'; 
 let holdTimer = 0;
 
 if (confirmBtn) confirmBtn.style.display = 'none';
@@ -26,7 +25,7 @@ Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
     faceapi.nets.faceLandmark68Net.loadFromUri('./models'),
     faceapi.nets.faceRecognitionNet.loadFromUri('./models'),
-    faceapi.nets.ageGenderNet.loadFromUri('./models')
+    faceapi.nets.ageGenderNet.loadFromUri('./models') 
 ]).then(startVideo);
 
 function startVideo() {
@@ -35,7 +34,7 @@ function startVideo() {
             currentStream = stream;
             video.srcObject = stream;
             video.style.display = 'block';
-            if (previewImg) previewImg.style.display = 'none';
+            if(previewImg) previewImg.style.display = 'none';
         })
         .catch(err => {
             statusText.innerText = "Camera access denied.";
@@ -43,12 +42,6 @@ function startVideo() {
         });
 }
 
-if (flipBtn) {
-    flipBtn.addEventListener('click', () => {
-        currentFacingMode = currentFacingMode === "user" ? "environment" : "user";
-        startVideo();
-    });
-}
 function getHeadTurn(landmarks) {
     const nose = landmarks.getNose()[3];
     const leftJaw = landmarks.getJawOutline()[0];
@@ -62,12 +55,12 @@ function captureProfileImage() {
     tempCanvas.width = video.videoWidth || 640;
     tempCanvas.height = video.videoHeight || 480;
     tempCanvas.getContext('2d').drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
-
+    
     if (previewImg) {
         previewImg.src = tempCanvas.toDataURL('image/jpeg', 1.0);
         previewImg.style.display = 'block';
     }
-
+    
     video.style.display = 'none';
     const trackingCanvas = document.getElementById('canvas');
     if (trackingCanvas) trackingCanvas.getContext('2d').clearRect(0, 0, trackingCanvas.width, trackingCanvas.height);
@@ -76,7 +69,7 @@ function captureProfileImage() {
 
     statusText.innerText = "Review Profile Photo. Looks good?";
     statusText.className = "success";
-
+    
     if (confirmBtn) confirmBtn.style.display = 'inline-block';
     if (recaptureBtn) recaptureBtn.style.display = 'inline-block';
 }
@@ -119,7 +112,7 @@ video.addEventListener('play', () => {
     faceapi.matchDimensions(canvas, displaySize);
 
     faceDetectionInterval = setInterval(async () => {
-        if (capturePhase === 'done' || capturePhase === 'reviewing' || video.style.display === 'none' || video.paused) return;
+        if (capturePhase === 'done' || capturePhase === 'reviewing' || video.style.display === 'none' || video.paused) return; 
 
         const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 }))
             .withFaceLandmarks()
@@ -139,11 +132,11 @@ video.addEventListener('play', () => {
                     holdTimer++;
                     if (holdTimer > 6) {
                         capturedDescriptors.straight = detection.descriptor;
-                        captureProfileImage();
+                        captureProfileImage(); 
                         holdTimer = 0;
                     }
                 } else { holdTimer = 0; }
-            }
+            } 
             else if (capturePhase === 'left') {
                 statusText.innerText = "Profile Saved! Now turn head LEFT for Face Lock";
                 statusText.className = "warning";
@@ -175,7 +168,7 @@ video.addEventListener('play', () => {
                 holdTimer = 0;
             }
         }
-    }, 150);
+    }, 150); 
 });
 
 async function finishRegistration() {
@@ -183,7 +176,7 @@ async function finishRegistration() {
     statusText.innerText = "All angles captured! Saving to database...";
     statusText.className = "warning";
 
-    const voteId = sessionStorage.getItem("voteid");
+    const voteId = sessionStorage.getItem("voteid"); 
     if (!voteId || !capturedBlob) {
         statusText.innerText = "Error: Missing Vote ID or Photo";
         statusText.className = "error";
@@ -195,16 +188,16 @@ async function finishRegistration() {
         formData.append('file', capturedBlob, 'face.jpg');
         formData.append('upload_preset', UPLOAD_PRESET);
         formData.append('public_id', `${voteId}_profile`);
-
+        
         const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
             method: 'POST',
             body: formData
         });
 
         if (!uploadRes.ok) throw new Error("Cloudinary image upload failed");
-
+        
         const uploadData = await uploadRes.json();
-
+        
         let birthDate = new Date();
         const birthString = sessionStorage.getItem("birth");
         if (birthString && !isNaN(new Date(birthString).getTime())) {
@@ -219,7 +212,7 @@ async function finishRegistration() {
             },
             registeredAt: new Date()
         });
-
+        
         await setDoc(doc(db, "voting", voteId), {
             name: sessionStorage.getItem("name") || "Unknown",
             aadhar: Number(sessionStorage.getItem("aadhar")) || 0,
@@ -230,7 +223,7 @@ async function finishRegistration() {
             vote_id: voteId,
             gmail: sessionStorage.getItem("gmail") || "",
             address: sessionStorage.getItem("address") || "",
-            faceImageUrl: uploadData.secure_url
+            faceImageUrl: uploadData.secure_url 
         });
 
         if (currentStream) {
@@ -239,19 +232,19 @@ async function finishRegistration() {
 
         statusText.innerText = "Setup Complete! Redirecting...";
         statusText.className = "success";
-
+        
         setTimeout(() => {
             sessionStorage.clear();
-            window.location.href = "form.html";
+            window.location.href = "form.html"; 
         }, 1500);
 
     } catch (error) {
         let exactError = error.message;
         if (error.code) exactError += " (Code: " + error.code + ")";
-
+        
         statusText.innerText = "FAILED: " + exactError;
         statusText.className = "error";
-
+        
         capturePhase = 'right';
         holdTimer = 0;
     }

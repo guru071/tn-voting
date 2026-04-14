@@ -1,26 +1,6 @@
 import { db } from "./firebase.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-window.onload = async function () {
-  const vote_found = sessionStorage.getItem("vote_found");
-  const isvoted = sessionStorage.getItem("isvoted");
-  const aadhar_found = sessionStorage.getItem("aadhar_found");
-  const voteid = sessionStorage.getItem("voteid");
-  const facelock_found = sessionStorage.getItem("facelock_found");
-  const info_found = sessionStorage.getItem("info_found");
-  if (vote_found !== "true" && isvoted !== "true" && aadhar_found !== "true" && facelock_found === "true") {
-    isNavigating = true;
-    window.location.href = "voting.html";
-    return;
-  }
-  if(info_found || info_found === "true"){
-    window.location.href="politics.html"
-  }
-  loadVoterProfile();
-};
-function nextPage() {
-    sessionStorage.setItem("info_found", "true");
-    window.location.href = "politics.html";
-}
+
 async function loadVoterProfile() {
     const voteid = sessionStorage.getItem("voteid");
     
@@ -66,3 +46,16 @@ async function loadVoterProfile() {
         console.error(error);
     }
 }
+
+window.onload = function () {
+    const vote_found = sessionStorage.getItem("vote_found");
+    const aadhar_found = sessionStorage.getItem("aadhar_found");
+
+    if (vote_found !== "true" || aadhar_found !== "true") {
+        alert("Unauthorized access");
+        window.location.href = "voting.html";
+        return;
+    }
+
+    loadVoterProfile();
+};

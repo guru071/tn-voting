@@ -5,13 +5,6 @@ import {
 
 document.querySelector(".nextbtn").addEventListener("click", click_next);
 
-window.onload=function(){
-  const vote_found = sessionStorage.getItem("vote_found");
-  if (vote_found || vote_found==="true"){
-    window.location.href="aadhar.html";
-  }
-}
-
 let listenersAdded = false; 
 let isNavigating = false; 
 

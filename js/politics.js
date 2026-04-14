@@ -9,16 +9,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const isvoted = sessionStorage.getItem("isvoted");
     const aadhar_found = sessionStorage.getItem("aadhar_found");
     const info_loaded = sessionStorage.getItem("info_loaded");
-<<<<<<< HEAD
-=======
-    const face_found = sessionStorage.getItem("facelock_found");
-    if (vote_found !== "true" && isvoted !== "true" && aadhar_found !== "true" && face_found !== "true" && info_loaded !== "true") {
-        alert("Unauthorized access");
-        isNavigating = true;
-        window.location.href = "voting.html";
-        return;
-    }
->>>>>>> f4131a0 (bug fix)
     const voteid = sessionStorage.getItem("voteid");
 
     if (!voteid) {
@@ -27,15 +17,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.location.href = "voting.html";
         return;
     }
-<<<<<<< HEAD
-=======
-    if (data.isvoted === true) {
-        alert("You have already cast your vote.");
-        isNavigating = true;
-        window.location.href = "voting.html";
-        return;
-    }
->>>>>>> f4131a0 (bug fix)
 
     try {
         const docRef = doc(db, "voting", voteid);
@@ -61,11 +42,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         window.addEventListener("beforeunload", () => {
             if (!isNavigating) {
-<<<<<<< HEAD
                 navigator.sendBeacon("/log", "user_leaving"); 
-=======
-                navigator.sendBeacon("/log", "user_leaving");
->>>>>>> f4131a0 (bug fix)
                 updateDoc(docRef, { access: false });
             }
         });
@@ -79,7 +56,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const data = docSnap.data();
 
-<<<<<<< HEAD
         if (vote_found !== "true" && isvoted !== "true" && aadhar_found !== "true" && data.isvoted !== true && info_loaded !== "true") {
             alert("Unauthorized access");
             isNavigating = true;
@@ -93,9 +69,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             window.location.href = "voting.html";
             return;
         }
-=======
-
->>>>>>> f4131a0 (bug fix)
 
         const rows = document.querySelectorAll(".candidate-row");
         const voteBtn = document.getElementById("voteBtn");
@@ -160,17 +133,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 disableAll();
                 await updateDoc(docRef, { access: false });
-<<<<<<< HEAD
                 
                 setTimeout(() => {
                     isNavigating = true;
                     window.location.href = "voting.html"; 
-=======
-
-                setTimeout(() => {
-                    isNavigating = true;
-                    window.location.href = "voting.html";
->>>>>>> f4131a0 (bug fix)
                 }, 1500);
 
             } catch (error) {

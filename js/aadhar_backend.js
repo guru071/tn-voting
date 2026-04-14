@@ -21,20 +21,10 @@ let isNavigating = false;
 
 window.onload = function () {
     const vote_found = sessionStorage.getItem("vote_found");
-<<<<<<< HEAD
-=======
-    const aadhar_found = sessionStorage.getItem("aadhar_found")
->>>>>>> f4131a0 (bug fix)
     if (vote_found !== "true") {
         alert("Unauthorized access");
         window.location.href = "voting.html";
     }
-<<<<<<< HEAD
-=======
-    if(aadhar_found || aadhar_found==="true"){
-        window.location.href="facelock.html"
-    }
->>>>>>> f4131a0 (bug fix)
 };
 
 otpInputs.forEach((input, index) => {
