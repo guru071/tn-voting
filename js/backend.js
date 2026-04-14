@@ -4,16 +4,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js"
 
 document.querySelector(".nextbtn").addEventListener("click", click_next);
-<<<<<<< HEAD
 
-=======
 window.onload=function(){
   const vote_found = sessionStorage.getItem("vote_found");
   if (vote_found || vote_found==="true"){
     window.location.href="aadhar.html";
   }
 }
->>>>>>> f4131a0 (bug fix)
+
 let listenersAdded = false; 
 let isNavigating = false; 
 
